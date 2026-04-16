@@ -32,7 +32,7 @@ export function TranscriptViewer({ transcript }: TranscriptViewerProps) {
         const isAgent = entry.role === 'agent' || entry.role === 'assistant' || entry.role === 'ai'
         return (
           <div
-            key={index}
+            key={`${entry.role}-${index}-${entry.timestamp || ''}`}
             className={`flex gap-3 ${isAgent ? 'justify-start' : 'justify-end'}`}
           >
             {isAgent && (

@@ -118,8 +118,8 @@ export function Analytics() {
                   label={({ name, value }) => `${name}: ${value}`}
                   labelLine={false}
                 >
-                  {claimsPieData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  {claimsPieData.map((entry, index) => (
+                    <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }} />
