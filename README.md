@@ -310,6 +310,87 @@ curl -X POST http://localhost:3005/api/tools/lookup-claim \
 - Edge cases: missing claims, inactive policies, invalid priorities, unparseable times
 - Dockerfile updated to Node 22 with multi-stage production build
 
+### Team Setup — Getting Started with Tanmay's Backend
+
+#### 1. Pull the Branch
+```bash
+git fetch origin
+git checkout feat/tool-endpoints
+```
+
+#### 2. Install Dependencies
+```bash
+cd backend
+npm install
+```
+
+#### 3. Add `.env` File
+Create `backend/.env`:
+```env
+SUPABASE_URL=https://peyqgljejyrgymokylcl.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBleXFnbGplanlyZ3ltb2t5bGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMzA2NzUsImV4cCI6MjA5MTkwNjY3NX0.hiaYldRjFVuLXX72HeNpk_hr3ibLue62STmtkma2YV0
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBleXFnbGplanlyZ3ltb2t5bGNsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjMzMDY3NSwiZXhwIjoyMDkxOTA2Njc1fQ.UKpt4GBIJGQXWCd_XS2KJvae-UkGB6AjKpRQGOA2ADU
+PORT=3005
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+```
+
+#### 4. Start the Server
+```bash
+npm run dev
+# Server runs on http://localhost:3005
+```
+
+#### 5. Test the Tool Endpoints
+```bash
+# Lookup a claim
+curl -X POST http://localhost:3005/api/tools/lookup-claim \
+  -H "Content-Type: application/json" \
+  -d '{"claim_id": "CLM-2026-000456"}'
+
+# Check a policy
+curl -X POST http://localhost:3005/api/tools/check-policy \
+  -H "Content-Type: application/json" \
+  -d '{"policy_number": "POL-2024-001234"}'
+
+# Check missing documents
+curl -X POST http://localhost:3005/api/tools/check-documents \
+  -H "Content-Type: application/json" \
+  -d '{"claim_id": "CLM-2026-000456"}'
+
+# File a new claim
+curl -X POST http://localhost:3005/api/tools/file-claim \
+  -H "Content-Type: application/json" \
+  -d '{"policy_number": "POL-2024-001234", "claim_type": "collision", "incident_date": "2026-04-16", "incident_description": "Tree fell on car"}'
+
+# Escalate to human
+curl -X POST http://localhost:3005/api/tools/escalate-to-human \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "Customer wants supervisor", "priority": "high"}'
+
+# Schedule callback
+curl -X POST http://localhost:3005/api/tools/schedule-callback \
+  -H "Content-Type: application/json" \
+  -d '{"phone_number": "+14155550101", "preferred_time": "tomorrow at 2pm", "reason": "Follow up"}'
+```
+
+#### ElevenLabs Integration
+The **ClaimsBot** agent is configured in Tanmay's ElevenLabs account with all 6 tools. To use it:
+- Ask Tanmay for ElevenLabs team invite or login credentials
+- The Agent ID is needed for the frontend WebRTC widget (`VITE_ELEVENLABS_AGENT_ID`)
+- Tool webhook URLs currently point at ngrok — swap to Railway URL after deployment
+
+#### Running ngrok for Live Testing
+```bash
+# Install ngrok and authenticate (one-time)
+ngrok config add-authtoken YOUR_TOKEN
+
+# Start tunnel
+ngrok http 3005
+# Copy the https://xxxx.ngrok-free.app URL
+# Update ElevenLabs tool webhook URLs with this URL
+```
+
 ---
 
 ### Ansh — Frontend Setup
