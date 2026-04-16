@@ -188,16 +188,6 @@ TSCONFIG
 #    "build": "tsc",
 #    "start": "node dist/server.js"
 
-# 6. Create .env file
-cat > .env << 'ENV'
-SUPABASE_URL=https://peyqgljejyrgymokylcl.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBleXFnbGplanlyZ3ltb2t5bGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMzA2NzUsImV4cCI6MjA5MTkwNjY3NX0.hiaYldRjFVuLXX72HeNpk_hr3ibLue62STmtkma2YV0
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBleXFnbGplanlyZ3ltb2t5bGNsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjMzMDY3NSwiZXhwIjoyMDkxOTA2Njc1fQ.UKpt4GBIJGQXWCd_XS2KJvae-UkGB6AjKpRQGOA2ADU
-PORT=3005
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-ENV
-
 # 7. Start coding server.ts, plugins, migration.sql
 # See HACKATHON_PRD.md sections 4-5 for exact schemas and API specs
 
