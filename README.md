@@ -213,14 +213,155 @@ curl -X POST http://localhost:3005/api/tools/schedule-callback \
   -d '{"phone_number": "+14155550101", "preferred_time": "tomorrow at 2pm", "reason": "Follow up"}'
 ```
 
-#### 7. ElevenLabs Testing (Optional)
-The ClaimsBot agent is already configured in ElevenLabs. To test live:
-1. Start ngrok: `ngrok http 3005`
-2. Copy the `https://xxxx.ngrok-free.app` URL
-3. Update the 6 tool webhook URLs in ElevenLabs dashboard with your ngrok URL
-4. Use the ElevenLabs Preview to talk to the agent
+#### 7. ElevenLabs + ngrok Setup
 
-Ask Tanmay for ElevenLabs access and the Agent ID.
+Each developer sets up their own ElevenLabs agent and ngrok tunnel.
+
+##### Step 7.1 — Create ElevenLabs Account
+1. Go to [elevenlabs.io](https://elevenlabs.io) and sign up (free tier works)
+2. Choose **ElevenAgents** platform (not ElevenCreative)
+
+##### Step 7.2 — Create the AI Agent
+1. Go to **Agents** → **Browse Templates** → select **Customer Support**
+2. Change **Agent name** to: `ClaimsBot`
+3. Click **Create Agent**
+
+##### Step 7.3 — Configure the Agent
+**System Prompt** — replace all existing text with:
+```
+You are a friendly, professional insurance claims assistant. Your name is Alex.
+You help policyholders check claim status, file new claims, understand their
+coverage, and identify missing documents.
+
+RULES:
+- Always verify the caller by asking for their claim number or policy number first.
+- Be empathetic — people calling about claims are often stressed.
+- Keep responses concise (2-3 sentences max) since this is a phone conversation.
+- If you can't resolve something, offer to escalate to a human agent.
+- Never make up policy details or claim info — always use tools to look them up.
+- If the caller asks about something outside insurance claims, politely redirect.
+- After resolving the main issue, always ask "Is there anything else I can help with?"
+```
+
+**First Message** — replace with:
+```
+Hello, thank you for calling SafeGuard Insurance claims. My name is Alex. I can help you check on a claim, file a new one, or answer questions about your coverage. How can I help you today?
+```
+
+**Voice** — search for **"Rachel - Clear and Engaging"** and select it. Add audio tags: Patient, Concerned, Serious, Empathetically, Warmly.
+
+Click **Publish**.
+
+##### Step 7.4 — Install and Start ngrok
+1. Create a free account at [ngrok.com](https://ngrok.com)
+2. Copy your auth token from [dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken)
+3. Install ngrok:
+   ```bash
+   # Linux/WSL
+   curl -s https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -o /tmp/ngrok.tgz
+   tar -xzf /tmp/ngrok.tgz -C ~/bin/
+   
+   # macOS (via Homebrew)
+   brew install ngrok
+   ```
+4. Authenticate:
+   ```bash
+   ngrok config add-authtoken YOUR_TOKEN
+   ```
+5. Make sure your backend is running (`npm run dev` on port 3005)
+6. Start the tunnel (in a separate terminal):
+   ```bash
+   ngrok http 3005
+   ```
+7. Copy the **Forwarding** URL (e.g., `https://xxxx-xxxx.ngrok-free.app`)
+
+**Tip:** Get a free static domain from [ngrok dashboard → Domains](https://dashboard.ngrok.com/domains) so your URL doesn't change on restart:
+```bash
+ngrok http 3005 --domain=your-static-domain.ngrok-free.app
+```
+
+##### Step 7.5 — Add the 6 Tool Webhooks
+In ElevenLabs, go to **ClaimsBot** → **Tools** tab → click **Add tool** for each:
+
+**Tool 1: lookup_claim**
+- Type: Webhook
+- Name: `lookup_claim`
+- Description: `Look up an existing insurance claim by claim number to get status, adjuster, and document details`
+- URL: `https://YOUR-NGROK-URL/api/tools/lookup-claim`
+- Method: POST
+- Body description: `Extract the claim number from what the caller said`
+- Property: `claim_id` (String, Required) — `The claim number, e.g. CLM-2026-000456`
+
+**Tool 2: check_policy**
+- Type: Webhook
+- Name: `check_policy`
+- Description: `Look up policy coverage details by policy number`
+- URL: `https://YOUR-NGROK-URL/api/tools/check-policy`
+- Method: POST
+- Body description: `Extract the policy number from what the caller said`
+- Property: `policy_number` (String, Required) — `The policy number, e.g. POL-2024-001234`
+
+**Tool 3: check_documents**
+- Type: Webhook
+- Name: `check_documents`
+- Description: `Check what documents are required and missing for a claim`
+- URL: `https://YOUR-NGROK-URL/api/tools/check-documents`
+- Method: POST
+- Body description: `Extract the claim number from what the caller said`
+- Property: `claim_id` (String, Required) — `The claim number, e.g. CLM-2026-000456`
+
+**Tool 4: file_claim**
+- Type: Webhook
+- Name: `file_claim`
+- Description: `File a new insurance claim for the caller`
+- URL: `https://YOUR-NGROK-URL/api/tools/file-claim`
+- Method: POST
+- Body description: `Extract the policy number, claim type, incident date, and description from the conversation`
+- Properties:
+  - `policy_number` (String, Required) — `The caller's policy number`
+  - `claim_type` (String, Required) — `Type of claim: collision, theft, water_damage, fire_damage, medical, windshield`
+  - `incident_date` (String, Required) — `Date the incident occurred, e.g. 2026-04-16`
+  - `incident_description` (String, Required) — `Description of what happened`
+
+**Tool 5: escalate_to_human**
+- Type: Webhook
+- Name: `escalate_to_human`
+- Description: `Escalate the call to a human supervisor when the caller requests it or the issue cannot be resolved`
+- URL: `https://YOUR-NGROK-URL/api/tools/escalate-to-human`
+- Method: POST
+- Body description: `Extract the reason for escalation and determine the priority level`
+- Properties:
+  - `reason` (String, Required) — `Why the caller needs a human agent`
+  - `priority` (String, Required) — `Priority level: low, normal, high, or urgent`
+
+**Tool 6: schedule_callback**
+- Type: Webhook
+- Name: `schedule_callback`
+- Description: `Schedule a follow-up callback at a time the caller prefers`
+- URL: `https://YOUR-NGROK-URL/api/tools/schedule-callback`
+- Method: POST
+- Body description: `Extract the phone number, preferred time, and reason from the conversation`
+- Properties:
+  - `phone_number` (String, Required) — `The caller's phone number for the callback`
+  - `preferred_time` (String, Required) — `When the caller wants the callback, e.g. tomorrow afternoon, next Monday at 2pm`
+  - `reason` (String, Not required) — `Reason for the follow-up call`
+
+After adding all 6 tools, enable **End conversation** in the System tools panel on the right.
+
+Click **Publish**.
+
+##### Step 7.6 — Test the Agent
+1. Click **Preview** (top right in ElevenLabs)
+2. Try saying: *"I want to check on my claim CLM-2026-000456"*
+3. The agent should respond with James Wilson's claim details
+4. Watch your ngrok terminal — you should see `POST /api/tools/lookup-claim 200 OK`
+
+**Test all 6 tools:**
+- *"What does my policy POL-2024-001234 cover?"* → check_policy
+- *"What documents am I missing for claim CLM-2026-000456?"* → check_documents
+- *"I want to file a new claim. A tree fell on my car yesterday. My policy is POL-2024-001234."* → file_claim
+- *"I'd like to speak with a supervisor about my denied claim."* → escalate_to_human
+- *"Can you schedule a callback for tomorrow at 2pm? My number is 415-555-0101."* → schedule_callback
 
 #### Architecture
 ```
