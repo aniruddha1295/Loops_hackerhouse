@@ -1,372 +1,564 @@
 # Build Plan — Team of 4, 5 Days
 
 > Start: April 16, 2026 | Judging: April 21-23, 2026
+> Deploy locally Days 1-3 → Production deploy Day 4
 
 ---
 
 ## Team Roles
 
-| Person | Role | Owns |
-|--------|------|------|
-| **Person A** | Backend Engineer | Fastify server, webhook tool endpoints, services, migration, Railway deploy |
-| **Person B** | Frontend Engineer | React dashboard, all pages + components, Vercel deploy |
-| **Person C** | Voice/AI Engineer | ElevenLabs agent config, prompts, tools, knowledge base, Twilio phone, WebRTC widget |
-| **Person D** | Integration + Demo Lead | Supabase setup, seed data, env vars, end-to-end testing, demo script, backup plans |
+| Name | Role | Owns |
+|------|------|------|
+| **Tanmay** | Backend — Tool Endpoints | All 6 webhook endpoints that ElevenLabs calls during a live conversation. The core brain of the product. |
+| **Anish** | Backend — Database + APIs | Migration SQL, seed data, dashboard read APIs (calls, claims, analytics), call logging webhook. |
+| **Ansh** | Frontend | React dashboard — all 6 pages, components, Supabase real-time, ElevenLabs WebRTC widget. |
+| **Aniruddha** | Deployment + Voice/AI Config + Demo Lead | Supabase project setup, ElevenLabs agent config, Twilio phone, Railway/Vercel deploy (Day 4), demo script, E2E testing. |
+
+### Why This Split Works
+
+```
+Tanmay (Backend Tools)     → Writes the code ElevenLabs calls mid-conversation
+Anish  (Backend DB + APIs) → Writes the database layer + what the dashboard reads
+                             ↕ They share the /backend folder but work on different files
+Ansh   (Frontend)          → Completely independent — builds UI with mock data first
+Aniruddha (Deploy + Voice) → Days 1-3: ElevenLabs/Twilio config (no coding, dashboard work)
+                              Day 4: Deploy everything to production
+                              Day 4-5: Demo rehearsal + backup plans
+```
 
 ---
 
-## Dependency Chain (What Blocks What)
+## Who Works On Which Files
 
+### Tanmay's Files (DO NOT TOUCH Anish's files)
 ```
-FULLY PARALLEL (no dependencies — start Day 1):
-  ┌─ [Person B] Frontend layout, pages, components (use hardcoded data)
-  ├─ [Person C] ElevenLabs agent config, knowledge base, voice selection
-  └─ [Person D] Supabase project setup, write seed data SQL
-
-SEQUENTIAL CHAIN 1 — Backend → Data:
-  [Person A] Write migration.sql
-    → [Person D] Run migration in Supabase
-      → [Person A] Build tool endpoints
-        → [Person D] Run seed.sql
-          → [Person B] Connect frontend to real data
-
-SEQUENTIAL CHAIN 2 — Voice → Phone:
-  [Person A] Deploy backend to Railway
-    → [Person C] Point ElevenLabs tool webhooks to Railway URL
-      → [Person C] Test conversation end-to-end
-        → [Person C] Set up Twilio + connect to ElevenLabs
-
-SEQUENTIAL CHAIN 3 — WebRTC:
-  [Person C] ElevenLabs agent fully working with tools
-    → [Person B] Integrate @11labs/react SDK into CallWidget
-      → [Person D] Test WebRTC calling from dashboard
-
-SEQUENTIAL CHAIN 4 — Live Call View:
-  [Person A] POST /api/webhooks/elevenlabs/conversation-ended
-    → [Person D] Verify call data flows to Supabase
-      → [Person B] Build LiveCallView with real-time subscriptions
+backend/src/routes/webhook-tools.ts      ← ALL 6 tool endpoints
+backend/src/services/claims-service.ts   ← claim lookup, filing logic
+backend/src/services/policy-service.ts   ← policy lookup logic
+backend/src/services/escalation-service.ts
+backend/src/services/callback-service.ts
 ```
 
-### Critical Path (Blocks Everything If Late)
-1. Supabase project + migration — Day 1, first 2 hours
-2. At least 2 working tool endpoints on Railway — Day 1, end of day
-3. ElevenLabs agent configured with correct webhook URLs — Day 2, morning
-4. First successful phone call through the full stack — Day 2, by noon
+### Anish's Files (DO NOT TOUCH Tanmay's files)
+```
+backend/src/server.ts                    ← Fastify setup, plugin registration
+backend/src/config/environment.ts        ← env var validation
+backend/src/plugins/supabase.ts          ← Supabase client plugin
+backend/src/plugins/cors.ts              ← CORS config
+backend/src/routes/calls.ts              ← GET /api/calls, GET /api/calls/:id
+backend/src/routes/claims.ts             ← GET /api/claims, GET /api/claims/:id
+backend/src/routes/analytics.ts          ← GET /api/analytics
+backend/src/routes/webhooks.ts           ← POST /api/webhooks/elevenlabs/conversation-ended
+backend/src/services/call-log-service.ts ← call logging logic
+backend/database/migration.sql           ← all 7 tables
+backend/database/seed.sql                ← all demo data
+backend/src/types/index.ts               ← shared TypeScript interfaces (BOTH use this)
+backend/package.json                     ← Anish sets up, Tanmay can add deps
+backend/tsconfig.json
+backend/Dockerfile
+```
+
+### Ansh's Files (completely separate /frontend folder)
+```
+frontend/                                ← entire folder is Ansh's
+frontend/src/pages/*.tsx
+frontend/src/components/*.tsx
+frontend/src/hooks/*.ts
+frontend/src/lib/*.ts
+frontend/src/types/*.ts
+```
+
+### Aniruddha's "Files" (mostly not code)
+```
+ElevenLabs dashboard                     ← agent config, tools, knowledge base, voice
+Twilio dashboard                         ← phone number, ElevenLabs link
+Supabase dashboard                       ← project setup, run SQL
+Railway dashboard (Day 4)               ← deploy backend
+Vercel dashboard (Day 4)                ← deploy frontend
+backend/database/seed.sql               ← co-owns with Anish (reviews demo data)
+DEMO_SCRIPT.md                          ← demo narration and flow
+```
+
+---
+
+## Dependency Chain
+
+```
+FULLY PARALLEL FROM HOUR 1 (no dependencies):
+  ┌─ [Ansh]       Frontend layout + pages with mock data
+  ├─ [Aniruddha]  ElevenLabs agent config + knowledge base PDFs
+  └─ [Anish]      Write migration.sql + scaffold Fastify server
+
+SEQUENTIAL CHAIN 1 — Database:
+  [Anish] Write migration.sql
+    → [Aniruddha] Run migration in Supabase (5 min task)
+      → [Anish] Write + run seed.sql
+        → [Tanmay] Can test tool endpoints against real data
+          → [Ansh] Connect frontend to real data (Day 2)
+
+SEQUENTIAL CHAIN 2 — Tool Endpoints:
+  [Anish] Supabase plugin + server setup ready
+    → [Tanmay] Build tool endpoints (uses Anish's Supabase plugin)
+      → [Aniruddha] Point ElevenLabs webhooks at Tanmay's endpoints (via ngrok)
+        → [Aniruddha] Test phone call end-to-end
+
+SEQUENTIAL CHAIN 3 — WebRTC Widget:
+  [Aniruddha] ElevenLabs agent fully working
+    → [Ansh] Integrate @11labs/react SDK into CallWidget (Day 3)
+
+SEQUENTIAL CHAIN 4 — Production Deploy:
+  [Everyone] Code complete (Day 3 EOD)
+    → [Aniruddha] Deploy backend to Railway (Day 4)
+      → [Aniruddha] Deploy frontend to Vercel (Day 4)
+        → [Aniruddha] Swap ElevenLabs webhook URLs to Railway
+          → [Everyone] Test on production + rehearse demo
+```
+
+### Critical Path (If This Is Late, Everything Slips)
+1. **Aniruddha**: Supabase project + keys shared → first 30 minutes
+2. **Anish**: migration.sql run in Supabase → first 2 hours
+3. **Anish**: server.ts + Supabase plugin ready → first 3 hours (Tanmay needs this)
+4. **Tanmay**: At least `lookup_claim` + `check_policy` working → Day 1 EOD
+5. **Aniruddha**: ElevenLabs agent with tools pointing at ngrok → Day 2 morning
+6. **Aniruddha**: First real phone call working → Day 2 noon
 
 ---
 
 ## Day 1 (April 16) — Foundation
 
-### All 4 People — First 30 Minutes
-- Create GitHub repo (monorepo: `/backend`, `/frontend`)
-- Person D: Create Supabase project, get URL + keys, share `.env` with team
-- Person A: Scaffold backend (`npm init`, Fastify + TypeScript)
-- Person B: Scaffold frontend (`npm create vite` — React + Tailwind)
-
-### Person A (Backend)
-| # | Task | Depends On | Output |
-|---|------|-----------|--------|
-| 1 | Set up Fastify server with CORS, Supabase plugin | — | `server.ts`, `plugins/` |
-| 2 | Write `migration.sql` (all 7 tables + indexes) | — | `database/migration.sql` |
-| 3 | **HAND OFF** migration.sql to Person D to run | — | — |
-| 4 | Implement `POST /api/tools/lookup-claim` | Tables exist | Working endpoint |
-| 5 | Implement `POST /api/tools/check-policy` | Tables exist | Working endpoint |
-| 6 | Implement `POST /api/tools/check-documents` | Tables exist | Working endpoint |
-| 7 | Test all 3 endpoints with curl/Postman | Seed data | Verified working |
-
-### Person B (Frontend)
-| # | Task | Depends On | Output |
-|---|------|-----------|--------|
-| 1 | Set up Tailwind, react-router, Layout + Sidebar | — | App shell |
-| 2 | Build `ClaimsList.tsx` (hardcoded data first) | — | Claims table page |
-| 3 | Build `ClaimStatusBadge.tsx` | — | Reusable component |
-| 4 | Build `StatsCard.tsx` | — | Reusable component |
-| 5 | Build `CallHistory.tsx` (table layout) | — | Calls table page |
-| 6 | Set up Supabase client in `lib/supabase.ts` | Supabase keys from D | Client ready |
-
-### Person C (Voice/AI)
-| # | Task | Depends On | Output |
-|---|------|-----------|--------|
-| 1 | Create ElevenLabs account, explore dashboard | — | Account ready |
-| 2 | Create agent with system prompt from PRD | — | Agent created |
-| 3 | Select voice (test 3-4, pick best professional voice) | — | Voice chosen |
-| 4 | Define all 6 tools in ElevenLabs with parameter schemas | — | Tools configured |
-| 5 | Point webhooks to temp URL (ngrok) for testing | Person A has local server | Testable |
-| 6 | Write 3 knowledge base PDFs | — | PDFs ready |
-| 7 | Upload PDFs to ElevenLabs agent | Agent created | KB active |
-| 8 | Test agent in ElevenLabs playground | All above | Working conversation |
-
-### Person D (Integration)
-| # | Task | Depends On | Output |
-|---|------|-----------|--------|
-| 1 | Create Supabase project, configure, share keys | — | Project live |
-| 2 | Run `migration.sql` in Supabase SQL editor | Person A delivers SQL | Tables created |
-| 3 | Write `seed.sql` (8 customers, 10 policies, 12 claims, etc.) | Tables exist | Seed file ready |
-| 4 | Run `seed.sql` in Supabase | Migration done | Data populated |
-| 5 | Set up Railway project, connect GitHub, configure env vars | — | Pipeline ready |
-| 6 | Set up Vercel project, connect GitHub | — | Pipeline ready |
-| 7 | Test backend deploys to Railway | Person A pushes code | Deploy verified |
-| 8 | Help Person C test webhooks via ngrok | Person A local server | E2E testable |
-
-### Day 1 Checkpoint ✓
-- [ ] Database exists with seed data
-- [ ] Backend has 3 working tool endpoints
-- [ ] Frontend has layout + claims list rendering
-- [ ] ElevenLabs agent configured with prompt, voice, tools, KB
-- [ ] Railway and Vercel deploy pipelines working
+### First 30 Minutes — Everyone Together
+```
+1. Clone repo: git clone https://github.com/aniruddha1295/Loops_hackerhouse.git
+2. Aniruddha: Create Supabase project → share URL + anon key + service role key
+3. Anish: mkdir backend && cd backend && npm init -y (scaffold Fastify + TS)
+4. Ansh:  npm create vite@latest frontend -- --template react-ts (scaffold React)
+5. Aniruddha: Create ElevenLabs account
+6. Everyone: Read HACKATHON_PRD.md — focus on YOUR section
+```
 
 ---
 
-## Day 2 (April 17) — Core Features Complete
+### Tanmay — Day 1
 
-### Person A (Backend)
-| # | Task | Depends On | Output |
+| # | Task | Blocked By | Output |
+|---|------|-----------|--------|
+| 1 | Read `HACKATHON_PRD.md` section 5 (tool endpoint specs) | — | Understands all 6 endpoints |
+| 2 | Wait for Anish to set up `server.ts` + Supabase plugin | Anish task 1-3 | — |
+| 3 | Implement `POST /api/tools/lookup-claim` | Supabase plugin + tables | Working endpoint |
+| 4 | Implement `POST /api/tools/check-policy` | Same | Working endpoint |
+| 5 | Implement `POST /api/tools/check-documents` | Same | Working endpoint |
+| 6 | Test all 3 with curl against seed data | Seed data exists | Verified |
+
+**Tanmay starts coding ~2-3 hours into Day 1** (after Anish has the server scaffold + DB ready). Use the waiting time to read the PRD and plan the service layer code.
+
+---
+
+### Anish — Day 1
+
+| # | Task | Blocked By | Output |
+|---|------|-----------|--------|
+| 1 | Scaffold Fastify project: `server.ts`, `tsconfig.json`, `package.json` | — | Project runs |
+| 2 | Build Supabase plugin (`plugins/supabase.ts`) | Aniruddha shares keys | Plugin ready |
+| 3 | Build CORS plugin (`plugins/cors.ts`) | — | Plugin ready |
+| 4 | Write `migration.sql` (all 7 tables + indexes from PRD section 4) | — | SQL file ready |
+| 5 | **HAND OFF** migration.sql to Aniruddha to run in Supabase | — | — |
+| 6 | Write `seed.sql` (8 customers, 10 policies, 12 claims, 15 call logs) | Tables exist | SQL file ready |
+| 7 | **HAND OFF** seed.sql to Aniruddha to run | — | — |
+| 8 | Write shared types in `types/index.ts` | — | Types ready |
+| 9 | Implement `GET /api/claims` (list claims with filters) | Tables + seed | Working endpoint |
+
+**Anish is the Day 1 workhorse.** Everything depends on the DB being up fast.
+
+---
+
+### Ansh — Day 1
+
+| # | Task | Blocked By | Output |
+|---|------|-----------|--------|
+| 1 | Set up Tailwind CSS + react-router-dom | — | Styled app |
+| 2 | Build `Layout.tsx` + `Sidebar.tsx` (navigation shell) | — | App shell |
+| 3 | Build `ClaimStatusBadge.tsx` component | — | Component |
+| 4 | Build `StatsCard.tsx` component | — | Component |
+| 5 | Build `ClaimsList.tsx` page with **hardcoded mock data** | — | Page renders |
+| 6 | Build `CallHistory.tsx` page with **hardcoded mock data** | — | Page renders |
+| 7 | Set up Supabase client in `lib/supabase.ts` | Keys from Aniruddha | Client ready |
+
+**Ansh is fully independent Day 1.** Use mock data. Don't wait for anyone.
+
+Mock data example for ClaimsList:
+```typescript
+const mockClaims = [
+  { claim_number: 'CLM-2026-000456', customer_name: 'James Wilson', status: 'under_review', claim_type: 'collision', claimed_amount: 8500 },
+  { claim_number: 'CLM-2026-000321', customer_name: 'Maria Garcia', status: 'approved', claim_type: 'water_damage', claimed_amount: 12000 },
+  // ... more
+];
+```
+
+---
+
+### Aniruddha — Day 1
+
+| # | Task | Blocked By | Output |
+|---|------|-----------|--------|
+| 1 | Create Supabase project → share URL + keys with everyone | — | Keys shared |
+| 2 | Run Anish's `migration.sql` in Supabase SQL editor | Anish delivers SQL | Tables created |
+| 3 | Run Anish's `seed.sql` in Supabase SQL editor | Anish delivers SQL | Data populated |
+| 4 | Create ElevenLabs account, explore Conversational AI dashboard | — | Account ready |
+| 5 | Create agent "ClaimsBot" with system prompt (from PRD section 6) | — | Agent created |
+| 6 | Pick voice — test 3-4 professional voices | — | Voice chosen |
+| 7 | Define all 6 tools in ElevenLabs with parameter schemas | — | Tools configured |
+| 8 | Point tool webhook URLs at `https://localhost` (placeholder) | — | — |
+| 9 | Write 3 knowledge base PDFs (FAQ, policies, claims process) | — | PDFs ready |
+| 10 | Upload PDFs to ElevenLabs agent | Agent created | KB active |
+| 11 | Set up ngrok: `ngrok http 3005` → share URL with team | — | Tunnel ready |
+| 12 | Test agent in ElevenLabs playground (text first, then voice) | Tools configured | Agent talks |
+
+---
+
+### Day 1 Checkpoint ✓
+- [ ] Supabase: tables created, seed data loaded
+- [ ] Tanmay: 3 tool endpoints working locally (lookup_claim, check_policy, check_documents)
+- [ ] Anish: Server scaffold done, migration + seed done, claims list API working
+- [ ] Ansh: App shell + ClaimsList + CallHistory rendering with mock data
+- [ ] Aniruddha: ElevenLabs agent configured with prompt, voice, tools, knowledge base
+
+---
+
+## Day 2 (April 17) — Core Features + First Phone Call
+
+### Tanmay — Day 2
+
+| # | Task | Blocked By | Output |
 |---|------|-----------|--------|
 | 1 | Implement `POST /api/tools/file-claim` | — | Creates claims in DB |
 | 2 | Implement `POST /api/tools/escalate-to-human` | — | Creates escalation |
 | 3 | Implement `POST /api/tools/schedule-callback` | — | Creates callback |
-| 4 | Implement `POST /api/webhooks/elevenlabs/conversation-ended` | — | Logs calls |
-| 5 | Implement `GET /api/calls` and `GET /api/calls/:id` | — | Dashboard reads |
-| 6 | Implement `GET /api/analytics` | — | Aggregated stats |
-| 7 | Deploy to Railway, test all with production URLs | All above | All endpoints live |
+| 4 | Test all 6 endpoints with curl | Seed data | All verified |
+| 5 | Help Aniruddha test: ElevenLabs → ngrok → local backend → Supabase | Aniruddha points webhooks at ngrok | **First real AI call!** |
 
-### Person B (Frontend)
-| # | Task | Depends On | Output |
-|---|------|-----------|--------|
-| 1 | Build `Analytics.tsx` (StatsCards + CallChart) | — | Analytics page |
-| 2 | Build `LiveCallView.tsx` (transcript + tool cards) | — | Live call page |
-| 3 | Build `TranscriptViewer.tsx` | — | Component |
-| 4 | Build `ToolExecutionCard.tsx` | — | Component |
-| 5 | Hook `ClaimsList.tsx` to Supabase real-time | Supabase client | Live updates |
-| 6 | Build `ClaimDetail.tsx` | — | Claim detail page |
-| 7 | Connect all pages to real API/Supabase data | Backend deployed | Real data |
+---
 
-### Person C (Voice/AI)
-| # | Task | Depends On | Output |
-|---|------|-----------|--------|
-| 1 | Update all 6 tool webhook URLs to Railway production | Backend on Railway | URLs correct |
-| 2 | Test full conversation: tools fire, data returns | Endpoints + seed data | Verified |
-| 3 | Tune system prompt (fix issues found during testing) | Testing done | Prompt polished |
-| 4 | Set up Twilio account, buy US number | — | Number ready |
-| 5 | Connect Twilio number to ElevenLabs agent | Agent working | Phone linked |
-| 6 | **TEST: First real phone call end-to-end** | All above | Call works! |
-| 7 | Create B2B agent variant (formal tone) | — | Second agent |
+### Anish — Day 2
 
-### Person D (Integration)
-| # | Task | Depends On | Output |
+| # | Task | Blocked By | Output |
 |---|------|-----------|--------|
-| 1 | E2E test: phone → ElevenLabs → webhook → DB → dashboard | All systems up | Verified |
-| 2 | Verify seed data displays correctly in frontend | Frontend connected | Verified |
-| 3 | Fix data format mismatches between backend and frontend | Testing | Fixes applied |
-| 4 | Test Supabase real-time (new claim appears live) | Frontend subs | Verified |
-| 5 | Start writing demo script | — | Draft script |
-| 6 | Create additional seed data if needed | — | Updated seed |
+| 1 | Implement `GET /api/calls` (list call logs) | — | Endpoint |
+| 2 | Implement `GET /api/calls/:id` (single call + tool executions) | — | Endpoint |
+| 3 | Implement `GET /api/analytics` (aggregated stats query) | — | Endpoint |
+| 4 | Implement `POST /api/webhooks/elevenlabs/conversation-ended` | — | Call logging |
+| 5 | Implement `GET /api/escalations` | — | Endpoint |
+| 6 | Test all dashboard endpoints with curl | Seed data | Verified |
+
+---
+
+### Ansh — Day 2
+
+| # | Task | Blocked By | Output |
+|---|------|-----------|--------|
+| 1 | Build `Analytics.tsx` (StatsCards + Recharts CallChart) | — | Analytics page |
+| 2 | Build `LiveCallView.tsx` layout (transcript left, tools right) | — | Demo page |
+| 3 | Build `TranscriptViewer.tsx` (scrolling message bubbles) | — | Component |
+| 4 | Build `ToolExecutionCard.tsx` (tool name, args, result, latency) | — | Component |
+| 5 | Build `ClaimDetail.tsx` (single claim + associated calls) | — | Detail page |
+| 6 | Connect `ClaimsList.tsx` to Supabase (replace mock data) | Supabase has data | Real data |
+| 7 | Set up Supabase real-time subscription on `claims` table | — | Live updates |
+
+---
+
+### Aniruddha — Day 2
+
+| # | Task | Blocked By | Output |
+|---|------|-----------|--------|
+| 1 | Point all 6 ElevenLabs tool webhooks at ngrok URL | ngrok running + Tanmay's endpoints | URLs set |
+| 2 | **TEST: Full conversation in ElevenLabs playground** | Webhooks pointed | Tools fire correctly |
+| 3 | Tune system prompt based on testing | Testing | Better responses |
+| 4 | Set up Twilio account, get US phone number | — | Number ready |
+| 5 | Import Twilio number into ElevenLabs dashboard | Agent working | Phone linked |
+| 6 | **TEST: First real phone call end-to-end** | All above | **THE MILESTONE** |
+| 7 | Share ElevenLabs agent ID with Ansh (for WebRTC widget) | Agent working | ID shared |
+| 8 | Start writing demo script (exact claim numbers, exact words) | — | Draft script |
 
 ### Day 2 Checkpoint ✓
-- [ ] All 6 tool endpoints working on Railway
-- [ ] Phone calls work end-to-end
-- [ ] Dashboard shows real data from Supabase
-- [ ] Analytics page renders charts
-- [ ] Live call view shows transcript updates
+- [ ] All 6 tool endpoints working (Tanmay)
+- [ ] All dashboard APIs working (Anish)
+- [ ] Analytics + LiveCallView + ClaimDetail built (Ansh)
+- [ ] **Real phone call works end-to-end** (Aniruddha)
+- [ ] Frontend connected to real Supabase data (Ansh)
 
 ---
 
 ## Day 3 (April 18) — WebRTC + Polish
 
-### Person A (Backend)
-| # | Task | Depends On | Output |
-|---|------|-----------|--------|
-| 1 | Parse ElevenLabs webhook (transcript, duration, tools) | — | Full call logging |
-| 2 | Harden error handling (graceful errors, not 500s) | — | Robust API |
-| 3 | Add request logging (Pino) | — | Debugging ready |
-| 4 | Verify all endpoints with production seed data | — | Verified |
+### Tanmay — Day 3
 
-### Person B (Frontend)
-| # | Task | Depends On | Output |
-|---|------|-----------|--------|
-| 1 | Build `CallWidget.tsx` (@11labs/react SDK) | Person C agent working | WebRTC widget |
-| 2 | Build `AgentConfig.tsx` (display config, voice, tools) | — | Config page |
-| 3 | Polish: loading states, empty states, error states | — | Polished UI |
-| 4 | Responsive check (demo on laptop/projector) | — | Demo-ready |
-| 5 | Add transitions/animations | — | Smooth UX |
+| # | Task | Output |
+|---|------|--------|
+| 1 | Harden error handling — no 500s, graceful error messages | Robust API |
+| 2 | Add request logging (Pino) for debugging | Logs visible |
+| 3 | Edge case: what if claim_id doesn't exist? Policy not found? | Handled |
+| 4 | Help Aniruddha test conversation edge cases | — |
+| 5 | Write `Dockerfile` for Railway deployment | Ready for Day 4 |
 
-### Person C (Voice/AI)
-| # | Task | Depends On | Output |
-|---|------|-----------|--------|
-| 1 | Test WebRTC via React SDK in dashboard | Person B CallWidget | Browser calling works |
-| 2 | Test 10+ conversation scenarios, adjust prompt | — | Edge cases handled |
-| 3 | Test agent-to-agent transfer (escalation) | — | Transfer works |
-| 4 | Record a backup test call video | — | Safety net |
-| 5 | Prepare KB answers for judge questions | — | Judge-ready |
+---
 
-### Person D (Integration)
-| # | Task | Depends On | Output |
+### Anish — Day 3
+
+| # | Task | Output |
+|---|------|--------|
+| 1 | Parse ElevenLabs conversation-ended webhook fully (transcript, duration, tools) | Complete call logs |
+| 2 | Add real-time support: when tool endpoint fires, also write to `call_tool_executions` | Live tool tracking |
+| 3 | Add Supabase real-time broadcast on new call_logs / tool_executions | Frontend can subscribe |
+| 4 | Write `reseed.sh` script (drops + recreates seed data for demo reset) | One-command reset |
+| 5 | Review all API responses — ensure frontend gets what it needs | No mismatches |
+
+---
+
+### Ansh — Day 3
+
+| # | Task | Blocked By | Output |
 |---|------|-----------|--------|
-| 1 | Full E2E test: phone call, WebRTC, claim filing, escalation | All systems | All paths verified |
-| 2 | Verify LiveCallView works during active call | — | Real-time verified |
-| 3 | Finalize demo script with exact claim numbers | Seed data final | Script locked |
-| 4 | Test demo script 2-3 times end to end | Script ready | Rehearsed |
-| 5 | Create backup: pre-recorded video of successful call | — | Video saved |
+| 1 | Build `CallWidget.tsx` using `@11labs/react` SDK | Agent ID from Aniruddha | WebRTC calling |
+| 2 | Build `AgentConfig.tsx` (display prompt, voice, tools) | — | Config page |
+| 3 | Connect `LiveCallView.tsx` to Supabase real-time | Anish adds real-time | Live transcript |
+| 4 | Connect `Analytics.tsx` to real API data | Anish's analytics endpoint | Real charts |
+| 5 | Connect `CallHistory.tsx` to real API data | Anish's calls endpoint | Real history |
+| 6 | Polish: loading states, empty states, error states | — | Polished UI |
+| 7 | Make it look good on projector (bigger fonts, high contrast) | — | Demo-ready |
+
+---
+
+### Aniruddha — Day 3
+
+| # | Task | Output |
+|---|------|--------|
+| 1 | Test WebRTC calling via Ansh's CallWidget | Browser calling verified |
+| 2 | Test 10+ conversation scenarios, note issues for prompt tuning | Issue list |
+| 3 | Tune prompt: fix edge cases, improve natural flow | Better agent |
+| 4 | Test escalation flow (transfer_to_number) | Escalation works |
+| 5 | Finalize demo script with exact claim numbers matching seed data | Script locked |
+| 6 | Do 2-3 full demo rehearsals (phone call + dashboard) | Rehearsed |
+| 7 | Record backup video of successful demo | Safety net |
 
 ### Day 3 Checkpoint ✓
-- [ ] WebRTC calling works from dashboard
-- [ ] All pages polished with proper states
-- [ ] Agent handles 10+ conversation scenarios
-- [ ] Demo script tested successfully
-- [ ] Backup video recorded
+- [ ] WebRTC calling works from dashboard (Ansh + Aniruddha)
+- [ ] All pages connected to real data with loading/error states (Ansh)
+- [ ] Backend handles edge cases gracefully (Tanmay)
+- [ ] Call logging + real-time updates working (Anish)
+- [ ] Agent handles 10+ scenarios smoothly (Aniruddha)
+- [ ] Demo rehearsed 2-3 times (Aniruddha)
+- [ ] Backup video recorded (Aniruddha)
 
 ---
 
-## Day 4 (April 19) — Demo Prep + Hardening
+## Day 4 (April 19) — DEPLOYMENT + Demo Prep
 
-### Person A (Backend)
-| # | Task | Output |
-|---|------|--------|
-| 1 | Performance check: tool responses under 500ms | Verified |
-| 2 | Reseed database with clean demo data | Fresh state |
-| 3 | Write quick reseed script (run before each demo) | `reseed.sh` |
-| 4 | Support B/C with any API issues | — |
+### Aniruddha — Day 4 (DEPLOYMENT DAY)
 
-### Person B (Frontend)
-| # | Task | Output |
-|---|------|--------|
-| 1 | Final visual polish: spacing, colors, fonts | Pixel-perfect |
-| 2 | Add "SafeGuard Insurance" branding (logo, header) | Branded |
-| 3 | Build landing/hero page if time allows | Optional |
-| 4 | Ensure dashboard looks great on projector | Big-screen ready |
-| 5 | Test on Chrome and Safari | Cross-browser |
+**Morning — Deploy Everything (2-3 hours):**
 
-### Person C (Voice/AI)
-| # | Task | Output |
-|---|------|--------|
-| 1 | Run demo script 3 times with real phone call | Rehearsed |
-| 2 | Test unexpected inputs (what if caller says something weird?) | Edge cases |
-| 3 | Tune filler phrases ("let me look that up...") | Natural feel |
-| 4 | Test at demo volume (speakerphone) | Audio quality |
+| # | Step | Time |
+|---|------|------|
+| 1 | Create Railway project → connect GitHub → select `/backend` | 10 min |
+| 2 | Add env vars to Railway (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, PORT) | 5 min |
+| 3 | Trigger deploy → wait → verify endpoints respond | 15 min |
+| 4 | Note Railway production URL: `https://<app>.railway.app` | — |
+| 5 | Create Vercel project → connect GitHub → select `/frontend` | 10 min |
+| 6 | Add env vars to Vercel (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL) | 5 min |
+| 7 | Trigger deploy → wait → verify pages load | 10 min |
+| 8 | **Swap all 6 ElevenLabs tool webhook URLs** from ngrok → Railway URL | 10 min |
+| 9 | **TEST: Phone call on production** → tools hit Railway → DB updates → Vercel dashboard shows it | 15 min |
+| 10 | **TEST: WebRTC from Vercel dashboard** → same flow | 10 min |
 
-### Person D (Integration)
-| # | Task | Output |
-|---|------|--------|
-| 1 | Full dress rehearsal (timed, 5-7 minutes) | Timed |
-| 2 | Prepare judging Q&A answers | Prep sheet |
-| 3 | Create 1-page architecture diagram | Visual aid |
-| 4 | Test on tethered wifi / backup network | Network verified |
-| 5 | Upload backup video to YouTube (unlisted) | Safety net |
+**Afternoon — Demo Prep:**
+
+| # | Task |
+|---|------|
+| 1 | Run `reseed.sh` to reset demo data to clean state |
+| 2 | Full dress rehearsal on production (timed, 5-7 min) |
+| 3 | Second dress rehearsal |
+| 4 | Prepare judge Q&A sheet (market size, business model, competitors, compliance) |
+| 5 | Create 1-page architecture diagram for judges |
+
+---
+
+### Tanmay — Day 4
+
+| # | Task |
+|---|------|
+| 1 | Performance check: all tool responses under 500ms on Railway |
+| 2 | Fix any issues Aniruddha finds during production testing |
+| 3 | Support deployment debugging if needed |
+| 4 | Participate in demo rehearsal |
+
+---
+
+### Anish — Day 4
+
+| # | Task |
+|---|------|
+| 1 | Reseed database with clean demo data |
+| 2 | Verify all dashboard APIs return correct data on production |
+| 3 | Fix any data format issues between production backend and frontend |
+| 4 | Participate in demo rehearsal |
+
+---
+
+### Ansh — Day 4
+
+| # | Task |
+|---|------|
+| 1 | Final visual polish: consistent spacing, colors, fonts |
+| 2 | Add "SafeGuard Insurance" branding (logo in header, company name) |
+| 3 | Ensure dashboard looks great on projector/big screen |
+| 4 | Test on Chrome + Safari |
+| 5 | Participate in demo rehearsal |
 
 ### Day 4 Checkpoint ✓
-- [ ] Demo rehearsed 3+ times
+- [ ] Backend live on Railway
+- [ ] Frontend live on Vercel
+- [ ] ElevenLabs webhooks pointing at Railway
+- [ ] Phone call works on production
+- [ ] WebRTC works on production
+- [ ] Demo rehearsed 2+ times on production
 - [ ] Database can reset in 30 seconds
-- [ ] All team members can explain architecture
-- [ ] Backup video recorded and uploaded
+- [ ] Backup video uploaded
 
 ---
 
-## Day 5 (April 20) — Final Prep
+## Day 5 (April 20) — Final Check + Rest
 
-### Everyone
-| Time | Task |
-|------|------|
-| Morning | One final full rehearsal |
-| Midday | Reset seed data to pristine state |
-| Afternoon | Verify ALL services running (Railway + Vercel + Supabase + ElevenLabs + Twilio) |
-| Evening | Charge all devices, prepare demo hardware |
-| | Finalize pitch: 2 min story + 3 min live demo + 2 min Q&A |
-| | **REST. Be sharp for judging April 21.** |
+### Everyone — Morning
+| Task |
+|------|
+| One final full rehearsal on production |
+| Reset seed data to pristine state |
+| Verify ALL services: Railway + Vercel + Supabase + ElevenLabs + Twilio |
+| Charge all devices |
+| Prepare: phone for calling, laptop for dashboard, backup laptop |
+
+### Pitch Structure (7 min total)
+| Part | Duration | Who |
+|------|----------|-----|
+| The Problem | 1 min | Aniruddha |
+| Live Phone Call Demo | 3 min | Aniruddha (narrates) + one person calls |
+| Dashboard Walkthrough | 1.5 min | Ansh (shows UI) |
+| Market + Business Model | 1 min | Aniruddha |
+| Q&A | 1-2 min | Everyone |
+
+### **REST.** Be sharp for judging April 21.
 
 ---
 
-## Demo Script (5-7 Minutes on Stage)
+## Demo Script (5-7 Minutes)
 
-### Setup
-- Dashboard open on laptop (ClaimsList page)
-- Phone with speaker ready
-- Second browser tab: LiveCallView
-- Database freshly seeded
+### Before Going On Stage
+- Reset seed data (Anish runs `reseed.sh`)
+- Open dashboard on laptop: ClaimsList page
+- Open second tab: LiveCallView page
+- Phone charged, speaker on, Twilio number ready
+- Backup: YouTube link to recorded demo
 
-### Act 1: The Problem (30 sec — Person D narrates)
-> "Insurance claims are the worst customer experience in the world. You call, wait on hold for 45 minutes, explain your situation to three different people, and still don't know when you'll get paid. In China alone, insurance complaints grew 368% last year. We built an AI agent that fixes this."
+### Act 1: The Problem (1 min — Aniruddha)
+> "Insurance claims are broken. You call, wait on hold for 45 minutes, explain your situation to three different people, get bounced between departments, and still don't know when you'll get paid.
+>
+> In China alone, insurance complaints grew 368% last year. Customer satisfaction with insurers is just 28% — lower than fast food restaurants.
+>
+> We built an AI agent that fixes both sides: consumers get instant help, insurers replace their call centers."
 
 ### Act 2: Live Phone Call (3 min)
+> "Let me show you. I'm going to call our AI agent right now."
 
-**Dial the Twilio number on speaker.**
+**Dial the Twilio number on speaker. Dashboard on screen.**
 
-**Demo conversation:**
-1. AI greets caller (Alex from SafeGuard Insurance)
-2. Caller asks about claim CLM-2026-000456
-3. → Dashboard: `lookup_claim` tool fires, shows in LiveCallView
-4. AI reports status, mentions missing documents
-5. Caller asks what documents are missing
-6. → Dashboard: `check_documents` tool fires
-7. AI lists missing docs
-8. Caller says they had another incident, wants to file new claim
-9. → Dashboard: `check_policy` then `file_claim` tools fire
-10. New claim appears in ClaimsList in REAL-TIME
-11. Caller asks for callback tomorrow
-12. → Dashboard: `schedule_callback` tool fires
-13. Call ends
+1. AI: *"Hello, thank you for calling SafeGuard Insurance claims. My name is Alex..."*
+2. Caller: *"I filed a claim last month for a car accident, I want to check the status."*
+3. AI asks for claim number → Caller: *"CLM-2026-000456"*
+4. **Dashboard: `lookup_claim` fires in LiveCallView** ← point at screen
+5. AI: *"Your claim is under review. Adjuster Sarah Chen is assigned. But you're missing some documents..."*
+6. Caller: *"What do I need?"*
+7. **Dashboard: `check_documents` fires** ← point at screen
+8. AI: *"You still need a repair estimate and photos."*
+9. Caller: *"I also had another incident — tree fell on my car. Can I file a new claim?"*
+10. **Dashboard: `file_claim` fires → new claim appears in ClaimsList in REAL-TIME** ← point at screen
+11. AI: *"Filed. Claim number CLM-2026-000789. Can I schedule a follow-up call?"*
+12. Caller: *"Yes, tomorrow afternoon."*
+13. **Dashboard: `schedule_callback` fires**
+14. End call.
 
-### Act 3: The Dashboard (1 min)
-- Show new claim in ClaimsList (appeared live)
-- Show Analytics (calls handled, resolution rate)
-- Show AgentConfig (how insurers customize)
-- Click WebRTC widget ("customers can also call from the website — zero phone cost")
+### Act 3: Dashboard (1.5 min — Ansh)
+> Show ClaimsList: "Notice the new claim appeared live during the call."
+> Show Analytics: "Every call is tracked — resolution rate, duration, escalations."
+> Show AgentConfig: "Insurance companies customize the voice, personality, and tools."
+> Click WebRTC widget: "Customers can also call from the website — zero phone cost."
 
-### Act 4: Why It Matters (30 sec)
-> "Insurance companies spend billions on claims call centers. Our AI handles 80% of routine calls at 1/10th the cost. Built on ElevenLabs Conversational AI. The consumer gets instant service. The insurer gets structured data. Everyone wins."
+### Act 4: Market + Business Model (1 min — Aniruddha)
+> "China's insurance market is $840 billion. Call centers cost $78 billion. Ping An already cut 118,000 jobs with AI — proving the model.
+>
+> We charge insurers per call handled. Consumers get a free tier. Built on ElevenLabs Conversational AI.
+>
+> We handle both sides: the consumer gets instant service, the insurer gets structured data from every call."
 
 ---
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|-----------|
-| ElevenLabs webhook format unexpected | Person C tests on Day 1, documents format before Person A builds |
-| Twilio credit runs out | WebRTC is free backup — identical AI experience |
-| Railway cold start | Enable "always on" or health-check ping before demo |
-| Supabase real-time slow | Fallback: poll every 2 seconds on LiveCallView |
-| Live demo fails | Pre-recorded backup video ready |
-| ElevenLabs rate limits | Test limits Day 3, avoid rapid successive calls |
-| Agent gives wrong answer | Extensive prompt tuning Day 3 + knowledge base PDFs |
+| Risk | Mitigation | Who Fixes |
+|------|-----------|-----------|
+| ElevenLabs webhook format unexpected | Aniruddha tests Day 1, documents format for Tanmay | Aniruddha + Tanmay |
+| Twilio credit runs out | WebRTC backup — same AI, no phone needed | Aniruddha |
+| Railway deploy fails | Aniruddha debugs; worst case, use ngrok on a laptop as backend | Aniruddha |
+| Supabase real-time slow | Ansh adds polling fallback (every 2 sec) | Ansh |
+| Live demo fails on stage | Pre-recorded backup video on YouTube | Aniruddha |
+| Agent gives wrong answer | Aniruddha tunes prompt Days 2-4 | Aniruddha |
+| ngrok URL changes | Aniruddha gets free ngrok account for stable URL | Aniruddha |
+| Git merge conflicts | Tanmay and Anish work on DIFFERENT files (see file ownership above) | Everyone |
 
 ---
 
-## NPM Dependencies
+## Environment Variables
 
-### Backend
-```json
-{
-  "dependencies": {
-    "fastify": "^5.3.0",
-    "fastify-plugin": "^5.0.0",
-    "@fastify/cors": "^10.0.0",
-    "@supabase/supabase-js": "^2.49.0",
-    "dotenv": "^16.5.0",
-    "pino": "^9.6.0",
-    "pino-pretty": "^13.0.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.0",
-    "@types/node": "^22.0.0",
-    "tsx": "^4.19.0"
-  }
-}
+### Shared `.env` (Aniruddha creates and shares Day 1)
+```bash
+# Supabase (Aniruddha creates project)
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+
+# ElevenLabs (Aniruddha creates agent)
+ELEVENLABS_API_KEY=sk_...
+ELEVENLABS_AGENT_ID=agent_...
+
+# Twilio (Aniruddha sets up Day 2)
+TWILIO_ACCOUNT_SID=AC...
+TWILIO_AUTH_TOKEN=...
+TWILIO_PHONE_NUMBER=+1...
+
+# Server
+PORT=3005
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
 ```
 
-### Frontend
-```json
-{
-  "dependencies": {
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "react-router-dom": "^6.23.0",
-    "@supabase/supabase-js": "^2.49.0",
-    "@11labs/react": "latest",
-    "axios": "^1.7.0",
-    "recharts": "^2.12.0",
-    "lucide-react": "^0.400.0",
-    "date-fns": "^3.6.0",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.3.0"
-  }
-}
+### Frontend `.env` (Ansh uses these)
+```bash
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_API_URL=http://localhost:3005    # Day 1-3: local, Day 4: Railway URL
+VITE_ELEVENLABS_AGENT_ID=agent_...    # From Aniruddha, Day 2
 ```
+
+---
+
+## Quick Reference: Who To Ask For What
+
+| If You Need... | Ask... |
+|----------------|--------|
+| Supabase URL/keys | Aniruddha |
+| ElevenLabs agent ID | Aniruddha |
+| Twilio phone number | Aniruddha |
+| ngrok URL | Aniruddha |
+| Database schema question | Anish |
+| API response format | Tanmay (tool endpoints) or Anish (dashboard endpoints) |
+| Frontend component question | Ansh |
+| "Does this work end-to-end?" | Aniruddha tests it |
+| "What claim number do I use for testing?" | Check seed.sql (Anish wrote it) |
