@@ -188,6 +188,10 @@ TSCONFIG
 #    "build": "tsc",
 #    "start": "node dist/server.js"
 
+# 6. Create .env file
+# Copy from the team's shared env file — ask Tanmay or check the team's shared credentials.
+# See .env.example for the required variable names.
+
 # 7. Start coding server.ts, plugins, migration.sql
 # See HACKATHON_PRD.md sections 4-5 for exact schemas and API specs
 
@@ -345,15 +349,7 @@ npm install
 ```
 
 #### 3. Add `.env` File
-Create `backend/.env`:
-```env
-SUPABASE_URL=https://peyqgljejyrgymokylcl.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBleXFnbGplanlyZ3ltb2t5bGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMzA2NzUsImV4cCI6MjA5MTkwNjY3NX0.hiaYldRjFVuLXX72HeNpk_hr3ibLue62STmtkma2YV0
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBleXFnbGplanlyZ3ltb2t5bGNsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjMzMDY3NSwiZXhwIjoyMDkxOTA2Njc1fQ.UKpt4GBIJGQXWCd_XS2KJvae-UkGB6AjKpRQGOA2ADU
-PORT=3005
-NODE_ENV=development
-FRONTEND_URL=http://localhost:5173
-```
+Create `backend/.env` using the shared env file from the team. Ask Tanmay or check the team's shared credentials.
 
 #### 4. Start the Server
 ```bash
@@ -428,11 +424,8 @@ npm install react-router-dom @supabase/supabase-js axios recharts lucide-react d
 npm install -D tailwindcss @tailwindcss/vite
 
 # 3. Create .env file
-cat > .env << 'ENV'
-VITE_SUPABASE_URL=https://peyqgljejyrgymokylcl.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBleXFnbGplanlyZ3ltb2t5bGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMzA2NzUsImV4cCI6MjA5MTkwNjY3NX0.hiaYldRjFVuLXX72HeNpk_hr3ibLue62STmtkma2YV0
-VITE_API_URL=http://localhost:3005
-ENV
+# Copy from the team's shared env file — ask Tanmay or check the team's shared credentials.
+# See .env.example for the required variable names (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_API_URL).
 
 # 4. Configure Tailwind in vite.config.ts:
 #    import tailwindcss from '@tailwindcss/vite'
