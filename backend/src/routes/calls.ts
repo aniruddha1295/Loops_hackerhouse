@@ -89,4 +89,78 @@ export default async function callsRoutes(fastify: FastifyInstance) {
     const response: ApiResponse<CallLogDetail> = { data: detail, error: null };
     return response;
   });
+
+  // POST /calls/:id/tool-executions — log a tool execution during a live call
+  fastify.post('/calls/:id/tool-executions', async (request: FastifyRequest<{
+    Params: { id: string };
+    Body: {
+      tool_name: string;
+      tool_args?: Record<string, any>;
+      tool_result?: Record<string, any>;
+      success?: boolean;
+      latency_ms?: number;
+    };
+  }>, reply) => {
+    const { id } = request.params;
+    const body = request.body as any;
+
+    // Verify the call log exists
+    const { data: callLog, error: callError } = await fastify.supabase
+      .from('call_logs')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (callError || !callLog) {
+      reply.code(404);
+      return { data: null, error: 'Call log not found' };
+    }
+
+    // Log the tool execution
+    const { data: execution, error } = await fastify.supabase
+      .from('call_tool_executions')
+      .insert({
+        call_log_id: id,
+        tool_name: body.tool_name,
+        tool_args: body.tool_args || {},
+        tool_result: body.tool_result || {},
+        success: body.success !== false,
+        latency_ms: body.latency_ms || null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      fastify.log.error(error, 'Failed to log tool execution');
+      reply.code(500);
+      return { data: null, error: 'Failed to log tool execution' };
+    }
+
+    // Update the call_logs tools_used array
+    const { data: currentCall } = await fastify.supabase
+      .from('call_logs')
+      .select('tools_used')
+      .eq('id', id)
+      .single();
+
+    const currentTools = (currentCall?.tools_used as string[]) || [];
+    if (!currentTools.includes(body.tool_name)) {
+      await fastify.supabase
+        .from('call_logs')
+        .update({ tools_used: [...currentTools, body.tool_name] })
+        .eq('id', id);
+    }
+
+    // Broadcast real-time event for live dashboard updates
+    await fastify.supabase.channel('call-updates').send({
+      type: 'broadcast',
+      event: 'tool-executed',
+      payload: {
+        call_log_id: id,
+        tool_execution: execution,
+      },
+    });
+
+    return { data: execution, error: null };
+  });
 }
