@@ -143,6 +143,93 @@ cat HACKATHON_PRD.md    # Full product spec
 cat BUILD_PLAN.md       # Day-by-day tasks with your name
 ```
 
+### Quick Start (For Any Developer)
+
+Follow these steps in order to get the project running locally:
+
+#### 1. Clone and Setup
+```bash
+git clone https://github.com/aniruddha1295/Loops_hackerhouse.git
+cd Loops_hackerhouse
+```
+
+#### 2. Backend Setup
+```bash
+cd backend
+npm install
+```
+
+#### 3. Environment File
+Get the shared `.env` file from the team (ask Tanmay or Aniruddha). Place it at `backend/.env`.
+
+Required variables: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PORT`, `NODE_ENV`, `FRONTEND_URL`
+
+#### 4. Database
+Migrations and seed data are already applied to the shared Supabase instance. No local database setup needed — the backend connects to Supabase cloud.
+
+If you need to reset the database, run `backend/database/run-all.sql` in the Supabase SQL Editor.
+
+#### 5. Start the Backend
+```bash
+npm run dev
+# Server runs at http://localhost:3005
+```
+
+Verify with:
+```bash
+curl http://localhost:3005/health
+```
+
+#### 6. Test the Tool Endpoints
+```bash
+# Lookup a claim
+curl -X POST http://localhost:3005/api/tools/lookup-claim \
+  -H "Content-Type: application/json" \
+  -d '{"claim_id": "CLM-2026-000456"}'
+
+# Check a policy
+curl -X POST http://localhost:3005/api/tools/check-policy \
+  -H "Content-Type: application/json" \
+  -d '{"policy_number": "POL-2024-001234"}'
+
+# Check missing documents
+curl -X POST http://localhost:3005/api/tools/check-documents \
+  -H "Content-Type: application/json" \
+  -d '{"claim_id": "CLM-2026-000456"}'
+
+# File a new claim
+curl -X POST http://localhost:3005/api/tools/file-claim \
+  -H "Content-Type: application/json" \
+  -d '{"policy_number": "POL-2024-001234", "claim_type": "collision", "incident_date": "2026-04-16", "incident_description": "Tree fell on car"}'
+
+# Escalate to human
+curl -X POST http://localhost:3005/api/tools/escalate-to-human \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "Customer wants supervisor", "priority": "high"}'
+
+# Schedule callback
+curl -X POST http://localhost:3005/api/tools/schedule-callback \
+  -H "Content-Type: application/json" \
+  -d '{"phone_number": "+14155550101", "preferred_time": "tomorrow at 2pm", "reason": "Follow up"}'
+```
+
+#### 7. ElevenLabs Testing (Optional)
+The ClaimsBot agent is already configured in ElevenLabs. To test live:
+1. Start ngrok: `ngrok http 3005`
+2. Copy the `https://xxxx.ngrok-free.app` URL
+3. Update the 6 tool webhook URLs in ElevenLabs dashboard with your ngrok URL
+4. Use the ElevenLabs Preview to talk to the agent
+
+Ask Tanmay for ElevenLabs access and the Agent ID.
+
+#### Architecture
+```
+Caller → ElevenLabs AI Agent → Tool Webhooks → Fastify Backend (port 3005) → Supabase (cloud DB)
+                                                         ↑
+                                               ngrok tunnel (local dev)
+                                               Railway URL (production)
+```
+
 ---
 
 ### Anish — Backend Setup (Do This First)
