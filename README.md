@@ -266,7 +266,7 @@ curl -X POST http://localhost:3005/api/tools/lookup-claim \
 
 ### Tanmay — Completed Work
 
-**Status: All 6 tool endpoints implemented, tested, and production-ready.**
+**Status: All 6 tool endpoints implemented, tested, and production-ready. ElevenLabs ClaimsBot agent configured and E2E verified.**
 
 #### Services Implemented
 | Service | Functions | Purpose |
@@ -309,6 +309,36 @@ curl -X POST http://localhost:3005/api/tools/lookup-claim \
 - Structured Pino logging on every tool invocation and completion
 - Edge cases: missing claims, inactive policies, invalid priorities, unparseable times
 - Dockerfile updated to Node 22 with multi-stage production build
+
+#### ElevenLabs Agent Setup (ClaimsBot)
+Originally assigned to Aniruddha — completed by Tanmay to unblock the team.
+
+| Configuration | Value |
+|--------------|-------|
+| Agent Name | ClaimsBot |
+| AI Assistant Name | Alex |
+| Voice | Rachel - Clear and Engaging (V3 Conversational) |
+| Audio Tags | Patient, Concerned, Serious, Empathetically, Warmly |
+| LLM | Qwen3-30B |
+| System Prompt | Insurance claims assistant with 6 tools and verification rules |
+| First Message | "Hello, thank you for calling SafeGuard Insurance claims..." |
+
+**6 Tool Webhooks Configured:**
+| Tool | Webhook URL |
+|------|-------------|
+| lookup_claim | `{NGROK_OR_RAILWAY_URL}/api/tools/lookup-claim` |
+| check_policy | `{NGROK_OR_RAILWAY_URL}/api/tools/check-policy` |
+| check_documents | `{NGROK_OR_RAILWAY_URL}/api/tools/check-documents` |
+| file_claim | `{NGROK_OR_RAILWAY_URL}/api/tools/file-claim` |
+| escalate_to_human | `{NGROK_OR_RAILWAY_URL}/api/tools/escalate-to-human` |
+| schedule_callback | `{NGROK_OR_RAILWAY_URL}/api/tools/schedule-callback` |
+
+**E2E Tested:** All 6 tools verified working through ElevenLabs → ngrok → backend → Supabase pipeline.
+
+#### ngrok Tunnel Setup
+- ngrok installed and authenticated on Tanmay's machine
+- Tunnel active at `https://dyslexic-coeditor-marital.ngrok-free.dev` → `localhost:3005`
+- After Railway deployment, swap ngrok URLs to Railway URLs in ElevenLabs tool settings
 
 ### Team Setup — Getting Started with Tanmay's Backend
 
