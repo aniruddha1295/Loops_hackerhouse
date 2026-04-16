@@ -24,7 +24,7 @@ await fastify.register(import('./routes/escalations.js'), { prefix: '/api' });
 await fastify.register(import('./routes/webhooks.js'), { prefix: '/api' });
 
 // Register routes (Tanmay's — will be created later)
-// await fastify.register(import('./routes/webhook-tools.js'), { prefix: '/api' });
+await fastify.register(import('./routes/webhook-tools.js'), { prefix: '/api' });
 
 // Health check
 fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
