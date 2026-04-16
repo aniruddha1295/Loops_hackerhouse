@@ -266,7 +266,7 @@ curl -X POST http://localhost:3005/api/tools/lookup-claim \
 
 ### Tanmay — Completed Work
 
-**Status: All 6 tool endpoints implemented, tested, and production-ready.**
+**Status: All 6 tool endpoints implemented, tested, and production-ready. ElevenLabs ClaimsBot agent configured and E2E verified.**
 
 #### Services Implemented
 | Service | Functions | Purpose |
@@ -309,6 +309,117 @@ curl -X POST http://localhost:3005/api/tools/lookup-claim \
 - Structured Pino logging on every tool invocation and completion
 - Edge cases: missing claims, inactive policies, invalid priorities, unparseable times
 - Dockerfile updated to Node 22 with multi-stage production build
+
+#### ElevenLabs Agent Setup (ClaimsBot)
+Originally assigned to Aniruddha — completed by Tanmay to unblock the team.
+
+| Configuration | Value |
+|--------------|-------|
+| Agent Name | ClaimsBot |
+| AI Assistant Name | Alex |
+| Voice | Rachel - Clear and Engaging (V3 Conversational) |
+| Audio Tags | Patient, Concerned, Serious, Empathetically, Warmly |
+| LLM | Qwen3-30B |
+| System Prompt | Insurance claims assistant with 6 tools and verification rules |
+| First Message | "Hello, thank you for calling SafeGuard Insurance claims..." |
+
+**6 Tool Webhooks Configured:**
+| Tool | Webhook URL |
+|------|-------------|
+| lookup_claim | `{NGROK_OR_RAILWAY_URL}/api/tools/lookup-claim` |
+| check_policy | `{NGROK_OR_RAILWAY_URL}/api/tools/check-policy` |
+| check_documents | `{NGROK_OR_RAILWAY_URL}/api/tools/check-documents` |
+| file_claim | `{NGROK_OR_RAILWAY_URL}/api/tools/file-claim` |
+| escalate_to_human | `{NGROK_OR_RAILWAY_URL}/api/tools/escalate-to-human` |
+| schedule_callback | `{NGROK_OR_RAILWAY_URL}/api/tools/schedule-callback` |
+
+**E2E Tested:** All 6 tools verified working through ElevenLabs → ngrok → backend → Supabase pipeline.
+
+#### ngrok Tunnel Setup
+- ngrok installed and authenticated on Tanmay's machine
+- Tunnel active at `https://dyslexic-coeditor-marital.ngrok-free.dev` → `localhost:3005`
+- After Railway deployment, swap ngrok URLs to Railway URLs in ElevenLabs tool settings
+
+### Team Setup — Getting Started with Tanmay's Backend
+
+#### 1. Pull the Branch
+```bash
+git fetch origin
+git checkout feat/tool-endpoints
+```
+
+#### 2. Install Dependencies
+```bash
+cd backend
+npm install
+```
+
+#### 3. Add `.env` File
+Create `backend/.env`:
+```env
+SUPABASE_URL=https://peyqgljejyrgymokylcl.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBleXFnbGplanlyZ3ltb2t5bGNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMzA2NzUsImV4cCI6MjA5MTkwNjY3NX0.hiaYldRjFVuLXX72HeNpk_hr3ibLue62STmtkma2YV0
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBleXFnbGplanlyZ3ltb2t5bGNsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjMzMDY3NSwiZXhwIjoyMDkxOTA2Njc1fQ.UKpt4GBIJGQXWCd_XS2KJvae-UkGB6AjKpRQGOA2ADU
+PORT=3005
+NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+```
+
+#### 4. Start the Server
+```bash
+npm run dev
+# Server runs on http://localhost:3005
+```
+
+#### 5. Test the Tool Endpoints
+```bash
+# Lookup a claim
+curl -X POST http://localhost:3005/api/tools/lookup-claim \
+  -H "Content-Type: application/json" \
+  -d '{"claim_id": "CLM-2026-000456"}'
+
+# Check a policy
+curl -X POST http://localhost:3005/api/tools/check-policy \
+  -H "Content-Type: application/json" \
+  -d '{"policy_number": "POL-2024-001234"}'
+
+# Check missing documents
+curl -X POST http://localhost:3005/api/tools/check-documents \
+  -H "Content-Type: application/json" \
+  -d '{"claim_id": "CLM-2026-000456"}'
+
+# File a new claim
+curl -X POST http://localhost:3005/api/tools/file-claim \
+  -H "Content-Type: application/json" \
+  -d '{"policy_number": "POL-2024-001234", "claim_type": "collision", "incident_date": "2026-04-16", "incident_description": "Tree fell on car"}'
+
+# Escalate to human
+curl -X POST http://localhost:3005/api/tools/escalate-to-human \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "Customer wants supervisor", "priority": "high"}'
+
+# Schedule callback
+curl -X POST http://localhost:3005/api/tools/schedule-callback \
+  -H "Content-Type: application/json" \
+  -d '{"phone_number": "+14155550101", "preferred_time": "tomorrow at 2pm", "reason": "Follow up"}'
+```
+
+#### ElevenLabs Integration
+The **ClaimsBot** agent is configured in Tanmay's ElevenLabs account with all 6 tools. To use it:
+- Ask Tanmay for ElevenLabs team invite or login credentials
+- The Agent ID is needed for the frontend WebRTC widget (`VITE_ELEVENLABS_AGENT_ID`)
+- Tool webhook URLs currently point at ngrok — swap to Railway URL after deployment
+
+#### Running ngrok for Live Testing
+```bash
+# Install ngrok and authenticate (one-time)
+ngrok config add-authtoken YOUR_TOKEN
+
+# Start tunnel
+ngrok http 3005
+# Copy the https://xxxx.ngrok-free.app URL
+# Update ElevenLabs tool webhook URLs with this URL
+```
 
 ---
 
