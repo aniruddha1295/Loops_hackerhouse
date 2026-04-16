@@ -217,7 +217,7 @@ const mockClaims = [
 
 ### Day 1 Checkpoint ✓
 - [ ] Supabase: tables created, seed data loaded
-- [ ] Tanmay: 3 tool endpoints working locally (lookup_claim, check_policy, check_documents)
+- [x] Tanmay: 3 tool endpoints working locally (lookup_claim, check_policy, check_documents)
 - [ ] Anish: Server scaffold done, migration + seed done, claims list API working
 - [ ] Ansh: App shell + ClaimsList + CallHistory rendering with mock data
 - [ ] Aniruddha: ElevenLabs agent configured with prompt, voice, tools, knowledge base
@@ -279,7 +279,7 @@ const mockClaims = [
 | 8 | Start writing demo script (exact claim numbers, exact words) | — | Draft script |
 
 ### Day 2 Checkpoint ✓
-- [ ] All 6 tool endpoints working (Tanmay)
+- [x] All 6 tool endpoints working (Tanmay)
 - [ ] All dashboard APIs working (Anish)
 - [ ] Analytics + LiveCallView + ClaimDetail built (Ansh)
 - [ ] **Real phone call works end-to-end** (Aniruddha)
@@ -342,7 +342,7 @@ const mockClaims = [
 ### Day 3 Checkpoint ✓
 - [ ] WebRTC calling works from dashboard (Ansh + Aniruddha)
 - [ ] All pages connected to real data with loading/error states (Ansh)
-- [ ] Backend handles edge cases gracefully (Tanmay)
+- [x] Backend handles edge cases gracefully (Tanmay)
 - [ ] Call logging + real-time updates working (Anish)
 - [ ] Agent handles 10+ scenarios smoothly (Aniruddha)
 - [ ] Demo rehearsed 2-3 times (Aniruddha)

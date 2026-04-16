@@ -264,6 +264,52 @@ curl -X POST http://localhost:3005/api/tools/lookup-claim \
 - Never return 500 errors (always return a helpful message)
 - Return natural language in the `message` field (the AI reads this to the caller)
 
+### Tanmay — Completed Work
+
+**Status: All 6 tool endpoints implemented, tested, and production-ready.**
+
+#### Services Implemented
+| Service | Functions | Purpose |
+|---------|-----------|---------|
+| `claims-service.ts` | `lookupClaim()`, `checkDocuments()`, `fileClaim()` | Claim lookup by number, document gap analysis, new claim filing with policy validation |
+| `policy-service.ts` | `lookupPolicy()` | Policy details with JSONB coverage info and customer join |
+| `escalation-service.ts` | `createEscalation()` | Priority-based escalation with SLA mapping (urgent/high/normal/low) |
+| `callback-service.ts` | `scheduleCallback()` | Natural language time parsing via chrono-node with fallback logic |
+
+#### Endpoint Response Examples
+
+**lookup-claim** — `POST /api/tools/lookup-claim`
+```json
+{ "found": true, "claim": { "claim_number": "CLM-2026-000456", "status": "under_review", "customer_name": "James Wilson", "assigned_adjuster": "Sarah Chen" } }
+```
+
+**check-documents** — `POST /api/tools/check-documents`
+```json
+{ "found": true, "documents_missing": ["repair_estimate", "photos"], "message": "You still need to submit the following: repair estimate and photos." }
+```
+
+**file-claim** — `POST /api/tools/file-claim`
+```json
+{ "success": true, "claim_number": "CLM-2026-519457", "status": "submitted", "message": "Your claim has been filed successfully.", "next_steps": ["Upload photos", "Get estimate", "Keep receipts"] }
+```
+
+**escalate-to-human** — `POST /api/tools/escalate-to-human`
+```json
+{ "success": true, "reference_number": "ESC-2026-1194", "message": "I've escalated this to a supervisor. You can expect a response within 2 business hours." }
+```
+
+**schedule-callback** — `POST /api/tools/schedule-callback`
+```json
+{ "success": true, "scheduled_time": "2026-04-17T15:00:00.000Z", "message": "I've scheduled a callback for Friday, April 17 at 3:00 PM." }
+```
+
+#### Quality & Hardening
+- All endpoints return HTTP 200 (ElevenLabs requirement) — errors via `found: false` / `success: false`
+- Input validation: null guards, empty string handling, whitespace trimming
+- Structured Pino logging on every tool invocation and completion
+- Edge cases: missing claims, inactive policies, invalid priorities, unparseable times
+- Dockerfile updated to Node 22 with multi-stage production build
+
 ---
 
 ### Ansh — Frontend Setup
