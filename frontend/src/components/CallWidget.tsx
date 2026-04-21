@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 
 export function CallWidget() {
-  const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID
+  const agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID || 'agent_7501kpr0wvskf9na4anrw5t9j5a3'
 
   if (!agentId) {
     return (
