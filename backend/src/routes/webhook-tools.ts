@@ -14,7 +14,8 @@ export default async function webhookToolsRoutes(fastify: FastifyInstance) {
   // POST /tools/lookup-claim — look up a claim by claim number
   fastify.post('/tools/lookup-claim', async (request) => {
     try {
-      const { claim_id } = request.body as { claim_id?: string };
+      const body = request.body as any;
+      const claim_id = body.claim_id || body.claimId || body.claimNumber || body.claim_number;
 
       if (!claim_id) {
         return { found: false, message: 'Please provide a claim number.' };
@@ -33,7 +34,8 @@ export default async function webhookToolsRoutes(fastify: FastifyInstance) {
   // POST /tools/check-policy — look up a policy by policy number
   fastify.post('/tools/check-policy', async (request) => {
     try {
-      const { policy_number } = request.body as { policy_number?: string };
+      const body = request.body as any;
+      const policy_number = body.policy_number || body.policyNumber;
 
       if (!policy_number) {
         return { found: false, message: 'Please provide a policy number.' };
@@ -52,7 +54,8 @@ export default async function webhookToolsRoutes(fastify: FastifyInstance) {
   // POST /tools/check-documents — check documents for a claim by claim number
   fastify.post('/tools/check-documents', async (request) => {
     try {
-      const { claim_id } = request.body as { claim_id?: string };
+      const body = request.body as any;
+      const claim_id = body.claim_id || body.claimId || body.claimNumber || body.claim_number;
 
       if (!claim_id) {
         return { found: false, message: 'Please provide a claim number.' };
@@ -71,26 +74,24 @@ export default async function webhookToolsRoutes(fastify: FastifyInstance) {
   // POST /tools/file-claim — file a new insurance claim
   fastify.post('/tools/file-claim', async (request) => {
     try {
-      const body = request.body as {
-        policy_number: string;
-        claim_type: string;
-        incident_date: string;
-        incident_description: string;
-      };
-      if (!body.policy_number || !body.incident_description) {
+      const body = request.body as any;
+      fastify.log.info({ rawBody: body }, 'Received file-claim payload');
+
+      const policy_number = body.policy_number || body.policyNumber;
+      const incident_description = body.incident_description || body.incidentDescription;
+      const claim_type = body.claim_type || body.claimType || 'auto';
+      const incident_date = body.incident_date || body.incidentDate || new Date().toISOString();
+
+      if (!policy_number || !incident_description) {
         return {
           success: false,
           message: 'I need at least a policy number and description of the incident to file a claim.',
         };
       }
-      if (!body.claim_type?.trim()) {
-        return {
-          success: false,
-          message: 'I need to know what type of claim this is, such as a collision, theft, or water damage.',
-        };
-      }
-      fastify.log.info({ tool: 'file-claim', args: { policy_number: body.policy_number, claim_type: body.claim_type } }, 'Tool invoked');
-      const result = await fileClaim(fastify.supabase, body);
+      
+      const args = { policy_number, claim_type, incident_date, incident_description };
+      fastify.log.info({ tool: 'file-claim', args }, 'Tool invoked');
+      const result = await fileClaim(fastify.supabase, args);
       if (result.success && result.claim_id) {
         try {
           const evidence = await processClaimEvidence(fastify, result.claim_id);
