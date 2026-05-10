@@ -4,6 +4,7 @@ import supabasePlugin from './plugins/supabase.js';
 import corsPlugin from './plugins/cors.js';
 import ethereumPlugin from './plugins/ethereum.js';
 import filecoinPlugin from './plugins/filecoin.js';
+import rawBody from '@fastify/raw-body';
 
 const fastify = Fastify({
   logger: {
@@ -19,6 +20,12 @@ await fastify.register(supabasePlugin);
 await fastify.register(corsPlugin);
 await fastify.register(ethereumPlugin);
 await fastify.register(filecoinPlugin);
+await fastify.register(rawBody, {
+  field: 'rawBody',
+  global: false,
+  encoding: false,
+  runFirst: true,
+});
 
 // Register routes (Anish's)
 await fastify.register(import('./routes/claims.js'), { prefix: '/api' });

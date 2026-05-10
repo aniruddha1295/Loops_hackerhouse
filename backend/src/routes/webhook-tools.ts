@@ -209,11 +209,7 @@ export default async function webhookToolsRoutes(fastify: FastifyInstance) {
         },
       });
 
-      const upload = await uploadClaimBundle(fastify.filecoin.synapse, {
-        claim_id: claim.id,
-        file_url: body.file_url,
-        file_type: body.file_type,
-      });
+      const upload = await uploadClaimBundle(fastify.filecoin.synapse, bundle);
 
       await fastify.supabase.from('evidence_bundles').insert({
         claim_id: claim.id,

@@ -6,17 +6,17 @@ import { createCallLog, updateCallLog, logToolExecution } from '../services/call
 
 export default async function webhooksRoutes(fastify: FastifyInstance) {
 
-  fastify.post('/webhooks/elevenlabs/conversation-ended', async (request, reply) => {
-    const rawBody = typeof request.body === 'string'
-      ? request.body
-      : JSON.stringify(request.body ?? {});
-    if (!verifyWebhookSignature(request, rawBody)) {
+  fastify.post('/webhooks/elevenlabs/conversation-ended', {
+    config: { rawBody: true }
+  }, async (request, reply) => {
+    const rawPayload = (request as any).rawBody
+      ? (request as any).rawBody.toString()
+      : (typeof request.body === 'string' ? request.body : JSON.stringify(request.body ?? {}));
+    if (!verifyWebhookSignature(request, rawPayload)) {
       return reply.status(401).send({ success: false, error: 'Invalid webhook signature' });
     }
 
-    const payload = (typeof request.body === 'string'
-      ? JSON.parse(request.body)
-      : request.body) as ElevenLabsConversationEndedPayload;
+    const payload = JSON.parse(rawPayload) as ElevenLabsConversationEndedPayload;
 
     try {
       // Check if call_log already exists for this conversation
@@ -135,6 +135,7 @@ function verifyWebhookSignature(request: any, rawBody: string): boolean {
   }
 
   const headerValue = request.headers['x-elevenlabs-signature']
+    || request.headers['elevenlabs-signature']
     || request.headers['x-signature']
     || request.headers['x-webhook-signature'];
 
