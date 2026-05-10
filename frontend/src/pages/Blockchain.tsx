@@ -124,7 +124,7 @@ export function Blockchain() {
                   <td className="px-4 py-3">
                     {claim.filecoin_cid ? (
                       <a
-                        href={`https://${claim.filecoin_cid}.ipfs.w3s.link`}
+                        href={`https://ipfs.io/ipfs/${claim.filecoin_cid}`}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-green-700 font-mono text-xs hover:underline"
