@@ -124,7 +124,7 @@ export function Blockchain() {
                   <td className="px-4 py-3">
                     {claim.filecoin_cid ? (
                       <a
-                        href={`https://explore.synapse.storage/${claim.filecoin_cid}`}
+                        href={`https://${claim.filecoin_cid}.ipfs.w3s.link`}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 text-green-700 font-mono text-xs hover:underline"

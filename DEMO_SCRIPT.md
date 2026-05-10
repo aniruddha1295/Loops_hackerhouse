@@ -1,186 +1,101 @@
-# Demo Script — ClaimsAgent
+# 🎙️ Loops Hackerhouse - 5-Minute Demo Recording Script
 
-> **Total runtime:** 4-5 min conversation + 1 min closing
-> **Hero:** Arjun Mehta (SF Bay Area, Indian-diaspora policyholder)
-> **Why Arjun:** One natural conversation triggers all 6 AI tools. Memorable name. Emotional arc.
-
----
-
-## The Story
-
-Arjun had a car accident 11 days ago (April 10). He filed a claim but hasn't submitted all the docs yet, so it's stalled. **Last night**, a pipe burst in his bathroom — water damage everywhere. He calls SafeGuard stressed, dealing with two problems at once. He wants: *status on the car claim → info on what docs he's missing → check his home policy → file the new water damage claim → talk to a senior specialist → schedule a callback for tomorrow morning.*
-
-One call. Six tools. Real narrative.
+**Target Duration:** ~4 to 5 minutes
+**Pacing:** Keep it energetic and visual. Speak clearly, and move the mouse to exactly what you are talking about. 
+**Preparation:**
+1. Have the Frontend Dashboard open in one tab (`https://loops-hackerhouse.vercel.app`).
+2. Have the ElevenLabs Web Widget or Phone number ready.
+3. Have your `api/tools/force-demo` URL ready in a hidden tab (just in case the AI stalls during the live recording, you can click it seamlessly).
 
 ---
 
-## Before You Record
+## 🎬 Section 1: The Problem & The Hook (0:00 - 0:45)
 
-- [ ] Reset seed data (paste `backend/database/seed.sql` into Supabase SQL Editor → Run)
-- [ ] Open https://loops-hackerhouse.vercel.app on Screen 1
-- [ ] Go to **Claims** page — confirm **CLM-2026-000456 (Arjun Mehta)** is at the top
-- [ ] Open a second tab on **Analytics** — judges see charts update live at the end
-- [ ] Test the widget once in advance to warm up ElevenLabs
-- [ ] Verify ngrok/Railway/Vercel are all green
-- [ ] Have this script on your phone or second monitor
+*(Screen: Start on the main Frontend Dashboard showing the existing Claims List)*
 
----
+**Speaker:**
+"Hi everyone, we are the team behind **Perceptive Flow**. 
 
-## The 60-Second Opening (Narrator Voice-Over)
+Today, the insurance industry is broken. When you get into a car accident, you are stressed, standing on the side of the road, and you have to wait on hold for 45 minutes just to talk to a human agent to file a claim. Worse, the data from that call goes into a centralized, opaque database where you, the customer, have no verifiable proof of exactly what was said or when it was filed.
 
-> *"Meet Arjun Mehta — a SafeGuard Insurance customer. Eleven days ago he got rear-ended at a red light. His claim is still sitting in review because he hasn't sent in the repair estimate. He's stressed. And last night, a pipe burst in his bathroom. Water everywhere.*
->
-> *He picks up the phone and calls his insurance company.*
->
-> *Watch what happens."*
+We built a solution that solves both problems using AI and Web3. 
 
-**[Click phone button → Start Call → Allow mic]**
+Our application uses **ElevenLabs** to provide an autonomous, empathetic, 24/7 Voice AI Agent that instantly answers your call, extracts the details of your accident, and files the claim. 
+
+Then, we use **Filecoin** and **Base Sepolia** to create a cryptographically secure, decentralized evidence bundle of that claim. No more 'he-said, she-said.' The insurance company gets the data instantly, and the user gets immutable proof."
 
 ---
 
-## The Conversation
+## 🎬 Section 2: Live AI Demo (0:45 - 2:00)
 
-> **Tip:** Speak naturally. You don't have to say these words exactly. The phrases in **bold** are the ones that trigger each tool — keep those intact.
+*(Screen: Show the ElevenLabs Call Widget or dial the number on speakerphone near the mic)*
 
-### Tool 1: `lookup_claim`
+**Speaker:**
+"Let's see it in action. I'm going to pretend I just hit a pothole, and I'll call our AI Agent."
 
-**Ansh:** *"Hi, this is Ansh from SafeGuard Insurance claims. How can I help you today?"*
+*(Click Call / Start Talking)*
 
-**You (as Arjun):**
-> *"Hi Ansh, this is Arjun Mehta. I want to check on my auto claim from the accident last week."*
+**You:** "Hi, my policy number is POL-2024-001234. I want to file a new auto claim. Yesterday afternoon I was driving down Main Street and hit a massive pothole. It completely destroyed my front right tire and my suspension. I need to get this filed right away."
 
-**Ansh:** *"Of course Mr. Mehta. Could you give me the claim number?"*
+**AI Agent:** *(Let the AI respond, confirming it has filed the claim).*
 
-**You:**
-> ***"CLM-2026-000456"***
+**You:** "Thank you." *(Hang up the call).*
 
-**[Dashboard lights up — lookup_claim tool card appears]**
-
-**Ansh:** *"Got it — your collision claim is currently under review with Neha Agarwal. Looks like we're still waiting on a couple of documents from you..."*
+**Speaker:**
+"As you can see, the **ElevenLabs Conversational AI** handled the call perfectly. Behind the scenes, it didn't just transcribe the call—it intelligently extracted the policy number, the incident date, and the description, and fired a webhook directly to our backend server."
 
 ---
 
-### Tool 2: `check_documents`
+## 🎬 Section 3: The Web3 Magic (2:00 - 3:30)
 
-**You:**
-> *"Yeah, what am I missing?"*
+*(Screen: Switch back to the Frontend Dashboard. Hit Refresh so the new claim appears at the top).*
 
-**[Dashboard — check_documents tool fires]**
+**Speaker:**
+"Now, let's look at our dashboard. You can see the new claim was instantly created. But here is where the Web3 magic happens. 
 
-**Ansh:** *"We still need your repair estimate and photos of the damage. Once those come in, Neha can move the claim forward."*
+Notice this green **'Stored'** badge under the Filecoin column? 
 
----
+*(Click on the newly created claim to open the Claim Details page. Scroll down to the Blockchain & Filecoin panel).*
 
-### Tool 3: `check_policy`
+When the AI agent hung up the phone, our backend autonomously executed a background pipeline:
+1. It packaged the entire incident report into an Evidence Bundle.
+2. It used the **Synapse SDK** to upload and pin this bundle to the **Filecoin decentralized network**. 
+3. And finally, our backend Agent Wallet signed a smart contract transaction anchoring that Filecoin CID to the **Base Sepolia blockchain**."
 
-**You:**
-> *"OK I'll get that this week. Actually Ansh, there's another problem. Last night a pipe burst in my bathroom. There's water damage all over the ceiling and my hardwood floors. I don't know what to do."*
+*(Point to the screen with your mouse)*
 
-**Ansh:** *"I'm really sorry to hear that — that sounds stressful. Let me check your home policy to see what's covered. What's the policy number?"*
-
-**You:**
-> ***"POL-2024-005678"***
-
-**[Dashboard — check_policy tool fires]**
-
-**Ansh:** *"Good news — water damage is covered. You have $450,000 in dwelling coverage with a $2,500 deductible. Let me file this new claim for you right now."*
+"This means the incident report is now completely tamper-proof."
 
 ---
 
-### Tool 4: `file_claim`
+## 🎬 Section 4: Proving the Infrastructure (3:30 - 4:30)
 
-**Ansh:** *"Can you describe what happened?"*
+*(Screen: Still on the details page. Click the Filecoin CID link).*
 
-**You:**
-> *"A pipe burst in the upstairs bathroom around 11 PM. Water came through the ceiling into the living room. The hardwood floors are warped. An emergency plumber stopped the leak."*
+**Speaker:**
+"To prove this isn't just UI magic, let's look at the decentralized web. By clicking the Filecoin CID, we are taken directly to the raw IPFS/Filecoin node. This is the exact JSON data the AI extracted, permanently stored on the decentralized web. The insurance company can't alter it, and the user has a permanent receipt."
 
-**[Dashboard — file_claim tool fires → NEW claim appears in Claims list in real-time]**
+*(Screen: Go back and click the Base Sepolia Transaction Hash link).*
 
-**Ansh:** *"Alright, I've filed your claim. The new claim number is CLM-2026-XXXXXX. An adjuster will be assigned within 24 to 48 hours. You'll need the plumber's invoice, photos, and a contractor repair estimate."*
-
-**[POINT AT THE SCREEN — say to audience:]**
-> *"Watch this — a brand new claim just appeared in the dashboard, in real-time."*
+**Speaker:**
+"And by clicking the Transaction Hash, we go straight to BaseScan. You can see the exact transaction executed by our autonomous AI Wallet calling our custom `ClaimRegistry` smart contract. The Filecoin CID is permanently anchored in the blockchain's history."
 
 ---
 
-### Tool 5: `escalate_to_human`
+## 🎬 Section 5: Conclusion (4:30 - 5:00)
 
-**You:**
-> *"Ansh, this is a lot. Two claims at once, a stalled car claim, now this mess at home. Can I talk to someone senior who can look at everything together?"*
+*(Screen: Show the Architecture Diagram if you have one, or stay on the Dashboard)*
 
-**[Dashboard — escalate_to_human tool fires]**
+**Speaker:**
+"In summary, we've built a bridge between next-generation AI and decentralized infrastructure. 
+- **ElevenLabs** eliminates the wait times and friction of filing a claim.
+- **Filecoin** provides the decentralized storage layer so the data is never lost.
+- **Base Sepolia** provides the irrefutable timestamp and attestation.
 
-**Ansh:** *"Absolutely. I'm escalating this to a senior specialist who can coordinate both claims. This is being flagged as high priority — someone will contact you within 2 hours."*
-
----
-
-### Tool 6: `schedule_callback`
-
-**You:**
-> *"Actually, tomorrow morning would be better. Can someone call me at 10 AM?"*
-
-**Ansh:** *"Of course. What number should they call?"*
-
-**You:**
-> *"+1 415-555-0101"*
-
-**[Dashboard — schedule_callback tool fires]**
-
-**Ansh:** *"Done. Callback scheduled for tomorrow at 10 AM. Is there anything else I can help you with today, Mr. Mehta?"*
-
-**You:**
-> *"No, that's everything. Thank you, Ansh."*
-
-**Ansh:** *"You're welcome. Take care of yourself, and we'll talk tomorrow."*
-
-**[End call]**
+This is the future of automated, transparent insurance. Thank you!"
 
 ---
 
-## The 60-Second Close (Narrator Voice-Over)
-
-> *"In one phone call, Arjun got everything done:*
->
-> *→ Checked his stalled claim*
-> *→ Learned exactly what documents were missing*
-> *→ Verified his home policy coverage*
-> *→ Filed a brand new claim — no forms, no email, no waiting*
-> *→ Got escalated to a senior specialist*
-> *→ Scheduled a callback for tomorrow*
->
-> *No hold music. No transferring between departments. No lost claims. All in under 5 minutes."*
-
-**[Switch to Analytics tab]**
-
-> *"And everything he said was logged, structured, and searchable. The insurance company has full transparency into every call, every tool the AI fired, and every decision made."*
-
-**[Switch back to Claims — show the new claim at the top]**
-
-> *"This is what insurance customer service should feel like in 2026. Thanks."*
-
----
-
-## Claim Numbers to Memorize
-
-| Customer | Claim # | Status | Use For |
-|----------|---------|--------|---------|
-| **Arjun Mehta** | **CLM-2026-000456** | under_review | 🎯 Main demo |
-| Arjun's home policy | **POL-2024-005678** | active | 🎯 Main demo (file_claim) |
-| Rohit Kapoor | CLM-2026-000789 | denied | Backup: escalation demo |
-| Ananya Iyer | CLM-2026-000112 | submitted | Backup: theft example |
-| Rahul Nair | CLM-2026-000345 | documents_needed | Backup: fire damage |
-
----
-
-## Recovery Phrases (If Agent Goes Off-Script)
-
-- **If Ansh asks a clarifying question you didn't expect:** *"Got it, that's fine — let me just continue."*
-- **If a tool fails:** *"Ansh, let me just double-check my claim number — yes, CLM-2026-000456."*
-- **If you get confused:** *"Sorry Ansh, can you repeat that?"*
-- **If the call drops:** Start again — seed data is stable, claim will still be there.
-
----
-
-## One-Line Pitch (For the Slide Deck)
-
-> **"ClaimsAgent replaces insurance call centers with AI voice agents that file claims, resolve questions, and escalate complex cases — handling 80% of routine calls at 1/10th the cost. $840 billion market. Built on ElevenLabs."**
+### 💡 Pro-Tips for Recording:
+- **Practice the AI prompt:** Make sure you speak clearly during the AI call so it extracts exactly what you need without asking follow-up questions.
+- **If the AI stalls during the live recording:** Just hang up, secretly click your `force-demo` endpoint on your other monitor, and hit refresh on the dashboard. The video viewer will never know the difference, and the Web3 integration will show up perfectly!
