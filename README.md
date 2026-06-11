@@ -5,7 +5,7 @@
 
 ---
 
-## What We're Building
+## What We're
 
 An AI call agent that sits between insurance companies and policyholders:
 
