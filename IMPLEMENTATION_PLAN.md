@@ -1,4 +1,4 @@
-# IMPLEMENTATION PLAN — ClaimVault Pivot
+# IMPLEMENTATION PLAN —  Pivot
 
 > Translates `WINNING_STRATEGY.md` into a precise, file-by-file delta against the *current* codebase.
 >
