@@ -123,6 +123,31 @@ Loops_hackerhouse/
 
 ---
 
+## Run Everything in Docker (no Supabase account needed)
+
+One image (root `Dockerfile`) contains everything: Postgres with the demo data, PostgREST, the backend and the dashboard behind nginx.
+On every start the database is rebuilt from `backend/database/*.sql` + `docker/db/demo-extras.sql`, with dates shifted so the newest call is from today —
+so **a restart always gives a clean demo**. Runs in ~120 MB RAM.
+
+```bash
+cp .env.docker.example .env    # optional: ElevenLabs webhook secret, web3 keys
+docker compose up -d --build   # → http://localhost:8080
+```
+
+| URL | What |
+|-----|------|
+| `/` | Dashboard |
+| `/api/...`, `/health` | Backend (point ElevenLabs tool webhooks at `<PUBLIC_URL>/api/tools/...`) |
+| `/api/events` | Live dashboard stream (Server-Sent Events) |
+| `/rest/v1/` | Supabase-compatible API used by the dashboard |
+
+**Reset the demo data:** `docker compose restart`
+
+**On a host:** any service that builds a Dockerfile works (Render, Hugging Face Spaces, …). The image listens on `$PORT` (default 8080), health check is `/health`.
+The ElevenLabs agent ID is baked in at build time (`VITE_ELEVENLABS_AGENT_ID` build arg in the `Dockerfile`).
+
+---
+
 ## Getting Started
 
 ### Prerequisites

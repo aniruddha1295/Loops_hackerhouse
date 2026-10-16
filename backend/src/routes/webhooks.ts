@@ -108,11 +108,7 @@ export default async function webhooksRoutes(fastify: FastifyInstance) {
         });
       }
 
-      await fastify.supabase.channel('call-updates').send({
-        type: 'broadcast',
-        event: 'call-completed',
-        payload: { call_log_id: callLog.id },
-      });
+      fastify.liveEvents.publish('call-completed', { call_log_id: callLog.id });
 
       return reply.status(200).send({ success: true, call_log_id: callLog.id });
     } catch (error) {

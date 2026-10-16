@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
+import { API_BASE_URL } from '../lib/api'
 import type { CallToolExecution } from '../types'
 
 interface CallEvent {
@@ -17,22 +17,26 @@ export function useRealtimeCalls() {
   }, [])
 
   useEffect(() => {
-    const channel = supabase
-      .channel('call-updates')
-      .on('broadcast', { event: 'tool-executed' }, (payload) => {
-        const execution = payload.payload?.tool_execution as CallToolExecution
-        if (execution) {
-          setToolExecutions((prev) => [...prev, execution])
-        }
-        setLatestEvent({ type: 'tool-executed', payload: payload.payload })
-      })
-      .on('broadcast', { event: 'call-completed' }, (payload) => {
-        setLatestEvent({ type: 'call-completed', payload: payload.payload })
-      })
-      .subscribe()
+    // Server-Sent Events from the backend (GET /api/events); EventSource reconnects on its own
+    const baseUrl = new URL(API_BASE_URL, window.location.origin)
+    const source = new EventSource(new URL('/api/events', baseUrl).toString())
+
+    source.addEventListener('tool-executed', (event) => {
+      const payload = JSON.parse((event as MessageEvent).data)
+      const execution = payload?.tool_execution as CallToolExecution
+      if (execution) {
+        setToolExecutions((prev) => [...prev, execution])
+      }
+      setLatestEvent({ type: 'tool-executed', payload })
+    })
+
+    source.addEventListener('call-completed', (event) => {
+      const payload = JSON.parse((event as MessageEvent).data)
+      setLatestEvent({ type: 'call-completed', payload })
+    })
 
     return () => {
-      supabase.removeChannel(channel)
+      source.close()
     }
   }, [])
 

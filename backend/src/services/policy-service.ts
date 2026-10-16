@@ -1,10 +1,11 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { normalizePolicyNumber } from './identifiers.js';
 
 export async function lookupPolicy(
   supabase: SupabaseClient,
   policyNumber: string
 ) {
-  policyNumber = policyNumber.trim();
+  policyNumber = normalizePolicyNumber(policyNumber);
 
   const { data, error } = await supabase
     .from('policies')

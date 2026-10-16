@@ -152,13 +152,9 @@ export default async function callsRoutes(fastify: FastifyInstance) {
     }
 
     // Broadcast real-time event for live dashboard updates
-    await fastify.supabase.channel('call-updates').send({
-      type: 'broadcast',
-      event: 'tool-executed',
-      payload: {
-        call_log_id: id,
-        tool_execution: execution,
-      },
+    fastify.liveEvents.publish('tool-executed', {
+      call_log_id: id,
+      tool_execution: execution,
     });
 
     return { data: execution, error: null };

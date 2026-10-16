@@ -14,8 +14,10 @@ import type {
   EscalationsFilter,
 } from '../types'
 
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005'
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3005',
+  baseURL: API_BASE_URL,
 })
 
 export async function getClaims(

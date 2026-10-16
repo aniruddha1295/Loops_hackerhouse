@@ -1,10 +1,11 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { normalizeClaimNumber, normalizePolicyNumber } from './identifiers.js';
 
 export async function lookupClaim(
   supabase: SupabaseClient,
   claimNumber: string
 ) {
-  claimNumber = claimNumber.trim();
+  claimNumber = normalizeClaimNumber(claimNumber);
 
   const { data: claim, error } = await supabase
     .from('claims')
@@ -39,7 +40,7 @@ export async function checkDocuments(
   supabase: SupabaseClient,
   claimNumber: string
 ) {
-  claimNumber = claimNumber.trim();
+  claimNumber = normalizeClaimNumber(claimNumber);
 
   const { data: claim, error } = await supabase
     .from('claims')
@@ -109,7 +110,7 @@ export async function fileClaim(
   const { data: policy, error: policyError } = await supabase
     .from('policies')
     .select('id, customer_id, status')
-    .eq('policy_number', data.policy_number)
+    .eq('policy_number', normalizePolicyNumber(data.policy_number))
     .single();
 
   if (!policy || policyError) {
