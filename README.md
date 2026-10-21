@@ -932,7 +932,7 @@ These are seeded in the database (once Anish writes seed.sql):
 | Question | Ask |
 |----------|-----|
 | Supabase keys / project issues | Aniruddha |
-| Database schema / migration | Anish |
+| Database schema /  | Anish |
 | Tool endpoint API format | Tanmay |
 | Frontend component / page | Ansh |
 | ElevenLabs agent ID / config | Aniruddha |
